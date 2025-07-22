@@ -1,0 +1,72 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+.metadata
+analysis_options.yaml
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Build artifacts
+app.*.symbols
+app.*.map.json
+
+# Android
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# iOS
+/ios/Pods/
+/ios/Podfile.lock
+/ios/Runner.xcworkspace/contents.xcworkspacedata
+/ios/Runner.xcworkspace/xcshareddata/
+/ios/Runner.xcworkspace/xcuserdata/
+/ios/.symlinks/
+/ios/Flutter/
+# Generated.xcconfig must be kept in version control
+# /ios/Flutter/Generated.xcconfig 
+
+# macOS
+/macos/Pods/
+/macos/Podfile.lock
+/macos/.symlinks/
+/macos/Flutter/ephemeral/
+# Generated.xcconfig must be kept in version control
+# /macos/Flutter/Generated.xcconfig
+
+# Windows
+/windows/flutter/ephemeral/
+/windows/flutter/ephemeral.generated/
+
+# Linux
+/linux/flutter/ephemeral/
+
+# Tool-specific
+.cursor/
+# codefetch/
+
+# Environment variables
+.env
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
