@@ -73,7 +73,9 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
         return Scaffold(
           appBar: AppBar(
             backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
+            scrolledUnderElevation: 0,
             title: Text(
               _titles[_selectedIndex],
               style: TextStyle(

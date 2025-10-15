@@ -753,19 +753,21 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     super.dispose();
   }
 
-  Widget _buildReadingControls(PreferenceSettingsProvider prefProvider) {
+  Widget _buildReadingControls() {
     final theme = Theme.of(context);
 
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-      ),
-      child: Column(
+    return StatefulBuilder(
+      builder: (BuildContext context, StateSetter setModalState) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.8,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Column(
         children: [
           // Handle Bar
           Container(
@@ -887,75 +889,95 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
                   const SizedBox(height: 16),
 
                   // Translation Section
-                  _buildSettingsCard(
-                    icon: Icons.translate,
-                    title: 'Translation',
-                    subtitle:
-                        prefProvider.showTranslation ? 'Enabled' : 'Disabled',
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          value: prefProvider.showTranslation,
-                          onChanged: (value) {
-                            prefProvider.toggleTranslation(value);
-                            if (value) _loadTranslations();
-                          },
-                          title: const Text('Show Translation'),
+                  Consumer<PreferenceSettingsProvider>(
+                    builder: (context, prefProvider, child) {
+                      return _buildSettingsCard(
+                        icon: Icons.translate,
+                        title: 'Translation',
+                        subtitle:
+                            prefProvider.showTranslation ? 'Enabled' : 'Disabled',
+                        child: Column(
+                          children: [
+                            SwitchListTile(
+                              value: prefProvider.showTranslation,
+                              onChanged: (value) async {
+                                prefProvider.toggleTranslation(value);
+                                if (value) {
+                                  await _loadTranslations();
+                                } else {
+                                  setState(() {
+                                    _translations = null;
+                                  });
+                                }
+                              },
+                              title: const Text('Show Translation'),
+                            ),
+                            if (prefProvider.showTranslation) ...[
+                              const SizedBox(height: 12),
+                              _buildBeautifulSelector(
+                                currentValue: PreferenceSettingsProvider
+                                            .availableTranslations[
+                                        prefProvider.selectedTranslation] ??
+                                    'Select Translation',
+                                options: PreferenceSettingsProvider
+                                    .availableTranslations,
+                                onSelected: (key) async {
+                                  prefProvider.setSelectedTranslation(key);
+                                  await _loadTranslations();
+                                },
+                                icon: Icons.translate,
+                              ),
+                            ],
+                          ],
                         ),
-                        if (prefProvider.showTranslation) ...[
-                          const SizedBox(height: 12),
-                          _buildBeautifulSelector(
-                            currentValue: PreferenceSettingsProvider
-                                        .availableTranslations[
-                                    prefProvider.selectedTranslation] ??
-                                'Select Translation',
-                            options: PreferenceSettingsProvider
-                                .availableTranslations,
-                            onSelected: (key) {
-                              prefProvider.setSelectedTranslation(key);
-                              _loadTranslations();
-                            },
-                            icon: Icons.translate,
-                          ),
-                        ],
-                      ],
-                    ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 16),
 
                   // Tafsir Section
-                  _buildSettingsCard(
-                    icon: Icons.menu_book,
-                    title: 'Tafsir (Commentary)',
-                    subtitle: prefProvider.showTafsir ? 'Enabled' : 'Disabled',
-                    child: Column(
-                      children: [
-                        SwitchListTile(
-                          value: prefProvider.showTafsir,
-                          onChanged: (value) {
-                            prefProvider.toggleTafsir(value);
-                            if (value) _loadTafsir();
-                          },
-                          title: const Text('Show Commentary'),
+                  Consumer<PreferenceSettingsProvider>(
+                    builder: (context, prefProvider, child) {
+                      return _buildSettingsCard(
+                        icon: Icons.menu_book,
+                        title: 'Tafsir (Commentary)',
+                        subtitle: prefProvider.showTafsir ? 'Enabled' : 'Disabled',
+                        child: Column(
+                          children: [
+                            SwitchListTile(
+                              value: prefProvider.showTafsir,
+                              onChanged: (value) async {
+                                prefProvider.toggleTafsir(value);
+                                if (value) {
+                                  await _loadTafsir();
+                                } else {
+                                  setState(() {
+                                    _tafsir = null;
+                                  });
+                                }
+                              },
+                              title: const Text('Show Commentary'),
+                            ),
+                            if (prefProvider.showTafsir) ...[
+                              const SizedBox(height: 12),
+                              _buildBeautifulSelector(
+                                currentValue:
+                                    PreferenceSettingsProvider.availableTafsir[
+                                            prefProvider.selectedTafsir] ??
+                                        'Select Tafsir',
+                                options: PreferenceSettingsProvider.availableTafsir,
+                                onSelected: (key) async {
+                                  prefProvider.setSelectedTafsir(key);
+                                  await _loadTafsir();
+                                },
+                                icon: Icons.menu_book,
+                              ),
+                            ],
+                          ],
                         ),
-                        if (prefProvider.showTafsir) ...[
-                          const SizedBox(height: 12),
-                          _buildBeautifulSelector(
-                            currentValue:
-                                PreferenceSettingsProvider.availableTafsir[
-                                        prefProvider.selectedTafsir] ??
-                                    'Select Tafsir',
-                            options: PreferenceSettingsProvider.availableTafsir,
-                            onSelected: (key) {
-                              prefProvider.setSelectedTafsir(key);
-                              _loadTafsir();
-                            },
-                            icon: Icons.menu_book,
-                          ),
-                        ],
-                      ],
-                    ),
+                      );
+                    },
                   ),
 
                   const SizedBox(height: 20),
@@ -964,7 +986,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
             ),
           ),
         ],
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1344,7 +1368,6 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final prefProvider = Provider.of<PreferenceSettingsProvider>(context);
     final progressProvider = Provider.of<ReadingProgressProvider>(context);
     final themeProvider = Provider.of<EnhancedThemeProvider>(context);
     final progress = progressProvider.getProgress(widget.surahNumber);
@@ -1360,6 +1383,9 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
           ),
         ),
         backgroundColor: themeProvider.getReadingModeBackgroundColor(context),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(
           color: themeProvider.getReadingModeTextColor(context),
         ),
@@ -1370,7 +1396,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
             onPressed: () {
               showModalBottomSheet(
                 context: context,
-                builder: (context) => _buildReadingControls(prefProvider),
+                builder: (context) => _buildReadingControls(),
                 isScrollControlled: true,
               );
             },
@@ -1499,58 +1525,62 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
 
                     // Content
                     Expanded(
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        itemCount: _ayahs.length + 1, // +1 for Basmallah
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return Consumer<EnhancedThemeProvider>(
-                              builder: (context, themeProvider, child) {
-                                final isDarkTheme = themeProvider.isDarkTheme(context);
-                                return Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: ColorFiltered(
-                                    colorFilter: isDarkTheme
-                                        ? const ColorFilter.mode(
-                                            Colors.transparent, BlendMode.multiply)
-                                        : const ColorFilter.matrix([
-                                            -1,
-                                            0,
-                                            0,
-                                            0,
-                                            255,
-                                            0,
-                                            -1,
-                                            0,
-                                            0,
-                                            255,
-                                            0,
-                                            0,
-                                            -1,
-                                            0,
-                                            255,
-                                            0,
-                                            0,
-                                            0,
-                                            1,
-                                            0,
-                                          ]),
-                                    child: Image.asset(
-                                      basmallahImagePath,
-                                      height: 50.0,
-                                      fit: BoxFit.contain,
-                                      color: themeProvider.getReadingModeTextColor(context),
-                                      colorBlendMode: BlendMode.modulate,
-                                    ),
-                                  ),
+                      child: Consumer<PreferenceSettingsProvider>(
+                        builder: (context, prefProvider, child) {
+                          return ListView.builder(
+                            controller: _scrollController,
+                            itemCount: _ayahs.length + 1, // +1 for Basmallah
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return Consumer<EnhancedThemeProvider>(
+                                  builder: (context, themeProvider, child) {
+                                    final isDarkTheme = themeProvider.isDarkTheme(context);
+                                    return Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: ColorFiltered(
+                                        colorFilter: isDarkTheme
+                                            ? const ColorFilter.mode(
+                                                Colors.transparent, BlendMode.multiply)
+                                            : const ColorFilter.matrix([
+                                                -1,
+                                                0,
+                                                0,
+                                                0,
+                                                255,
+                                                0,
+                                                -1,
+                                                0,
+                                                0,
+                                                255,
+                                                0,
+                                                0,
+                                                -1,
+                                                0,
+                                                255,
+                                                0,
+                                                0,
+                                                0,
+                                                1,
+                                                0,
+                                              ]),
+                                        child: Image.asset(
+                                          basmallahImagePath,
+                                          height: 50.0,
+                                          fit: BoxFit.contain,
+                                          color: themeProvider.getReadingModeTextColor(context),
+                                          colorBlendMode: BlendMode.modulate,
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 );
-                              },
-                            );
-                          }
+                              }
 
-                          final verse = _ayahs[index - 1];
-                          return _buildAyahWidget(
-                              verse, index - 1, prefProvider);
+                              final verse = _ayahs[index - 1];
+                              return _buildAyahWidget(
+                                  verse, index - 1, prefProvider);
+                            },
+                          );
                         },
                       ),
                     ),
