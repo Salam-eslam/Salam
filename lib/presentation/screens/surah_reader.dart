@@ -400,12 +400,7 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
 
     // Get the current scroll position
     final scrollOffset = _scrollController.offset;
-    final viewportHeight = _scrollController.position.viewportDimension;
     final totalScrollableHeight = _scrollController.position.maxScrollExtent;
-
-    // Calculate which verse is currently in the middle of the viewport
-    // This gives us a more accurate representation of reading progress
-    final middleOfViewport = scrollOffset + (viewportHeight / 2);
 
     // Calculate progress as percentage of scroll completion
     double scrollProgress = 0.0;
@@ -430,9 +425,10 @@ class _SurahReaderScreenState extends State<SurahReaderScreen> {
     }
 
     // Convert scroll progress to ayah number
-    // Add 1 because we want to show that we're reading verse X, not that we've completed X-1 verses
+    // Calculate which ayah corresponds to the current scroll position
+    // Use ceiling to ensure we show the ayah we're currently viewing
     final currentAyah =
-        ((scrollProgress * _totalAyahs) + 1).round().clamp(1, _totalAyahs);
+        (scrollProgress * _totalAyahs).ceil().clamp(1, _totalAyahs);
 
     // Only update if the ayah has changed and is valid
     if (currentAyah > 0 &&

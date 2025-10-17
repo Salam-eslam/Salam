@@ -13,10 +13,13 @@ import 'core/utils/app_theme.dart';
 import 'core/utils/route_observer.dart';
 import 'data/models/cached_surah.dart';
 import 'data/models/bookmark.dart';
+import 'data/models/page_progress.dart';
 import 'presentation/providers/preference_settings_provider.dart';
 import 'presentation/providers/reading_progress_provider.dart';
 import 'presentation/providers/enhanced_theme_provider.dart';
 import 'presentation/providers/chat_history_provider.dart';
+import 'presentation/providers/quran_page_provider.dart';
+import 'presentation/providers/page_progress_provider.dart';
 import 'presentation/screens/main_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
 import 'presentation/providers/cache_provider.dart';
@@ -37,6 +40,7 @@ void main() async {
   Hive.registerAdapter(CachedSurahAdapter());
   Hive.registerAdapter(CachedAyahAdapter());
   Hive.registerAdapter(BookmarkAdapter());
+  Hive.registerAdapter(PageProgressAdapter());
 
   // Initialize clean architecture dependencies
   await DependencyInjection.init();
@@ -57,6 +61,10 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ReadingProgressProvider()),
         ChangeNotifierProvider(create: (_) => EnhancedThemeProvider()),
         ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
+        ChangeNotifierProvider(
+          create: (_) => QuranPageProvider(DependencyInjection.quranRepository),
+        ),
+        ChangeNotifierProvider(create: (_) => PageProgressProvider()),
       ],
       child: const MyApp(),
     ),
@@ -96,9 +104,10 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    // Load theme settings
+    // Load theme settings and initialize providers
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<EnhancedThemeProvider>().loadSettings();
+      context.read<PageProgressProvider>().initialize();
     });
   }
 

@@ -34,6 +34,10 @@ class ReadingProgress {
   }
 
   double get progressPercentage {
+    // Calculate percentage: current ayah / total ayahs
+    // This matches the scroll-based calculation
+    // Example: Ayah 1 of 7 = 14.3%, Ayah 7 of 7 = 100%
+    if (lastReadAyah == 0 || totalAyahs == 0) return 0.0;
     return (lastReadAyah / totalAyahs) * 100;
   }
 }
