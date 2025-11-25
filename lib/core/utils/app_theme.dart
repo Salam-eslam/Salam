@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 
 enum AppThemeStyle {
@@ -64,20 +63,14 @@ class AppTheme {
     outline: Color(0xFF938F99),
   );
 
-  // Typography
+  // Typography - Using system fonts for stability
   static TextTheme _getTextTheme({
     required bool isArabic,
     ArabicFontFamily arabicFont = ArabicFontFamily.cairo,
     double fontScale = 1.0,
   }) {
-    if (isArabic) {
-      return GoogleFonts.getTextTheme(
-        arabicFont.fontFamily,
-        _baseTextTheme.apply(fontSizeFactor: fontScale),
-      );
-    }
-    return GoogleFonts.robotoTextTheme(
-        _baseTextTheme.apply(fontSizeFactor: fontScale));
+    // Use system fonts directly to avoid Google Fonts AssetManifest issues
+    return _baseTextTheme.apply(fontSizeFactor: fontScale);
   }
 
   static const TextTheme _baseTextTheme = TextTheme(
@@ -180,7 +173,7 @@ class AppTheme {
         shape: const RoundedRectangleBorder(),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outline.withOpacity(0.2),
+        color: colorScheme.outline.withValues(alpha: 0.2),
         thickness: 1,
       ),
       switchTheme: SwitchThemeData(
@@ -192,9 +185,9 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return colorScheme.primary.withOpacity(0.5);
+            return colorScheme.primary.withValues(alpha: 0.5);
           }
-          return colorScheme.outline.withOpacity(0.3);
+          return colorScheme.outline.withValues(alpha: 0.3);
         }),
       ),
       // Page transitions
@@ -274,7 +267,7 @@ class AppTheme {
         shape: const RoundedRectangleBorder(),
       ),
       dividerTheme: DividerThemeData(
-        color: colorScheme.outline.withOpacity(0.2),
+        color: colorScheme.outline.withValues(alpha: 0.2),
         thickness: 1,
       ),
       switchTheme: SwitchThemeData(
@@ -286,9 +279,9 @@ class AppTheme {
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return colorScheme.primary.withOpacity(0.5);
+            return colorScheme.primary.withValues(alpha: 0.5);
           }
-          return colorScheme.outline.withOpacity(0.3);
+          return colorScheme.outline.withValues(alpha: 0.3);
         }),
       ),
       // Page transitions
@@ -301,61 +294,58 @@ class AppTheme {
     );
   }
 
-  // Arabic text theme for Quran verses
+  // Arabic text theme for Quran verses - using system fonts
   static TextTheme arabicTextTheme({
     ArabicFontFamily arabicFont = ArabicFontFamily.cairo,
     double fontScale = 1.0,
   }) {
-    return GoogleFonts.getTextTheme(
-      arabicFont.fontFamily,
-      const TextTheme(
-        displayLarge: TextStyle(
-          fontSize: 32,
-          fontWeight: FontWeight.w400,
-          height: 1.8,
-        ),
-        displayMedium: TextStyle(
-          fontSize: 28,
-          fontWeight: FontWeight.w400,
-          height: 1.8,
-        ),
-        displaySmall: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w400,
-          height: 1.8,
-        ),
-        headlineLarge: TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w500,
-          height: 1.8,
-        ),
-        headlineMedium: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w500,
-          height: 1.8,
-        ),
-        headlineSmall: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          height: 1.8,
-        ),
-        titleLarge: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          height: 1.8,
-        ),
-        bodyLarge: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w400,
-          height: 2.0,
-        ),
-        bodyMedium: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          height: 2.0,
-        ),
-      ).apply(fontSizeFactor: fontScale),
-    );
+    return const TextTheme(
+      displayLarge: TextStyle(
+        fontSize: 32,
+        fontWeight: FontWeight.w400,
+        height: 1.8,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 28,
+        fontWeight: FontWeight.w400,
+        height: 1.8,
+      ),
+      displaySmall: TextStyle(
+        fontSize: 24,
+        fontWeight: FontWeight.w400,
+        height: 1.8,
+      ),
+      headlineLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w500,
+        height: 1.8,
+      ),
+      headlineMedium: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        height: 1.8,
+      ),
+      headlineSmall: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w500,
+        height: 1.8,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        height: 1.8,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w400,
+        height: 2.0,
+      ),
+      bodyMedium: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        height: 2.0,
+      ),
+    ).apply(fontSizeFactor: fontScale);
   }
 
   // Custom gradients

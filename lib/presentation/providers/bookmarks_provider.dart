@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/result.dart';
 import '../../domain/repositories/quran_repository_interface.dart';
 import '../../domain/usecases/manage_bookmarks_usecase.dart';
 

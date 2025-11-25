@@ -118,10 +118,12 @@ class _QiblaScreenState extends State<QiblaScreen>
         actions: [
           IconButton(
             icon: const Icon(Icons.help_outline),
+            tooltip: 'Calibration instructions',
             onPressed: _showCalibrationInstructions,
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh direction',
             onPressed: () => _qiblaProvider.refresh(),
           ),
         ],
@@ -150,12 +152,12 @@ class _QiblaScreenState extends State<QiblaScreen>
           children: [
             // Accuracy and Status Bar
             _buildStatusBar(),
-            
+
             // Main Compass Area
             Expanded(
               child: _buildQiblaCompass(),
             ),
-            
+
             // Bottom Information Panel
             _buildBottomPanel(),
           ],
@@ -275,7 +277,7 @@ class _QiblaScreenState extends State<QiblaScreen>
               ],
             ),
           ),
-          
+
           // Calibration Status
           if (_qiblaProvider.needsCalibration)
             Container(
@@ -304,7 +306,7 @@ class _QiblaScreenState extends State<QiblaScreen>
                 ],
               ),
             ),
-          
+
           // Distance to Mecca
           if (_qiblaProvider.distanceToMecca != null)
             Expanded(
@@ -327,7 +329,8 @@ class _QiblaScreenState extends State<QiblaScreen>
                     ],
                   ),
                   Text(
-                    QiblaService.formatDistance(_qiblaProvider.distanceToMecca!),
+                    QiblaService.formatDistance(
+                        _qiblaProvider.distanceToMecca!),
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.primary,
                       fontWeight: FontWeight.bold,
@@ -351,7 +354,7 @@ class _QiblaScreenState extends State<QiblaScreen>
             // Main Compass
             _buildCompass(),
             const SizedBox(height: 24),
-            
+
             // Direction info
             _buildDirectionInfo(),
           ],
@@ -405,22 +408,26 @@ class _QiblaScreenState extends State<QiblaScreen>
             animation: _pulseController,
             builder: (context, child) {
               return Container(
-                width: _qiblaProvider.isAligned ? 
-                  16 + (4 * _pulseController.value) : 12,
-                height: _qiblaProvider.isAligned ? 
-                  16 + (4 * _pulseController.value) : 12,
+                width: _qiblaProvider.isAligned
+                    ? 16 + (4 * _pulseController.value)
+                    : 12,
+                height: _qiblaProvider.isAligned
+                    ? 16 + (4 * _pulseController.value)
+                    : 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _qiblaProvider.isAligned 
-                    ? Colors.green 
-                    : theme.colorScheme.onSurface,
-                  boxShadow: _qiblaProvider.isAligned ? [
-                    BoxShadow(
-                      color: Colors.green.withValues(alpha: 0.6),
-                      blurRadius: 8,
-                      spreadRadius: 2,
-                    ),
-                  ] : null,
+                  color: _qiblaProvider.isAligned
+                      ? Colors.green
+                      : theme.colorScheme.onSurface,
+                  boxShadow: _qiblaProvider.isAligned
+                      ? [
+                          BoxShadow(
+                            color: Colors.green.withValues(alpha: 0.6),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                      : null,
                 ),
               );
             },
@@ -455,9 +462,19 @@ class _QiblaScreenState extends State<QiblaScreen>
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: _qiblaProvider.isAligned 
-                  ? [Colors.green.shade400, Colors.green, Colors.green.shade700, Colors.transparent]
-                  : [Colors.green.shade300, Colors.green, Colors.green.shade600, Colors.transparent],
+                colors: _qiblaProvider.isAligned
+                    ? [
+                        Colors.green.shade400,
+                        Colors.green,
+                        Colors.green.shade700,
+                        Colors.transparent
+                      ]
+                    : [
+                        Colors.green.shade300,
+                        Colors.green,
+                        Colors.green.shade600,
+                        Colors.transparent
+                      ],
                 stops: const [0.0, 0.4, 0.7, 1.0],
               ),
               boxShadow: [
@@ -483,7 +500,7 @@ class _QiblaScreenState extends State<QiblaScreen>
       theme.colorScheme.secondary,
       theme.colorScheme.tertiary,
     ];
-    
+
     return SizedBox(
       width: 320,
       height: 320,
@@ -494,7 +511,7 @@ class _QiblaScreenState extends State<QiblaScreen>
           final radius = 140.0;
           final x = 160 + radius * math.cos(angleRad) - 16;
           final y = 160 + radius * math.sin(angleRad) - 16;
-          
+
           return Positioned(
             left: x,
             top: y,
@@ -541,13 +558,15 @@ class _QiblaScreenState extends State<QiblaScreen>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: isAligned ? [
-            Colors.green.withValues(alpha: 0.2),
-            Colors.green.withValues(alpha: 0.1),
-          ] : [
-            theme.colorScheme.surfaceContainer,
-            theme.colorScheme.surfaceContainerHigh,
-          ],
+          colors: isAligned
+              ? [
+                  Colors.green.withValues(alpha: 0.2),
+                  Colors.green.withValues(alpha: 0.1),
+                ]
+              : [
+                  theme.colorScheme.surfaceContainer,
+                  theme.colorScheme.surfaceContainerHigh,
+                ],
         ),
         border: Border.all(
           color: isAligned ? Colors.green : theme.dividerColor,
@@ -556,7 +575,7 @@ class _QiblaScreenState extends State<QiblaScreen>
         boxShadow: [
           BoxShadow(
             color: (isAligned ? Colors.green : theme.colorScheme.shadow)
-              .withValues(alpha: 0.1),
+                .withValues(alpha: 0.1),
             blurRadius: 8,
             spreadRadius: 2,
           ),
@@ -578,7 +597,9 @@ class _QiblaScreenState extends State<QiblaScreen>
               ),
               const SizedBox(width: 12),
               Text(
-                isAligned ? 'Perfectly Aligned with Qibla!' : 'Rotate to align with Qibla',
+                isAligned
+                    ? 'Perfectly Aligned with Qibla!'
+                    : 'Rotate to align with Qibla',
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: isAligned ? Colors.green : theme.colorScheme.onSurface,
@@ -649,9 +670,9 @@ class _QiblaScreenState extends State<QiblaScreen>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Refresh button
           Material(
             color: theme.colorScheme.primary,
@@ -697,7 +718,7 @@ class EnhancedCompassMarkingsPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    
+
     // Major markings (every 30 degrees)
     final majorPaint = Paint()
       ..color = theme.colorScheme.onSurface.withValues(alpha: 0.4)

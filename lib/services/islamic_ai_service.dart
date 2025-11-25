@@ -1,6 +1,7 @@
 import 'package:dart_openai/dart_openai.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../data/models/chat_message.dart';
 
 class IslamicAIService {
   static const String _egyptianIftaUrl = 'https://www.dar-alifta.org/ar/';
@@ -53,26 +54,55 @@ Remember: If uncertain, say "I don't know" rather than guessing.
     OpenAI.apiKey = apiKey;
   }
 
-  Future<AIResponse> askQuestion(String question) async {
+  Future<AIResponse> askQuestion(String question,
+      {List<ChatMessage> history = const []}) async {
     try {
+      // Build the messages list starting with system prompt
+      final messages = <OpenAIChatCompletionChoiceMessageModel>[
+        OpenAIChatCompletionChoiceMessageModel(
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(
+                _systemPrompt),
+          ],
+          role: OpenAIChatMessageRole.system,
+        ),
+      ];
+
+      // Add history messages
+      // We limit history to last 10 messages to avoid token limits
+      final recentHistory =
+          history.length > 10 ? history.sublist(history.length - 10) : history;
+
+      for (final msg in recentHistory) {
+        // Skip error messages or empty ones
+        if (msg.isError || msg.text.isEmpty) continue;
+
+        messages.add(
+          OpenAIChatCompletionChoiceMessageModel(
+            content: [
+              OpenAIChatCompletionChoiceMessageContentItemModel.text(msg.text),
+            ],
+            role: msg.isUser
+                ? OpenAIChatMessageRole.user
+                : OpenAIChatMessageRole.assistant,
+          ),
+        );
+      }
+
+      // Add current question
+      messages.add(
+        OpenAIChatCompletionChoiceMessageModel(
+          content: [
+            OpenAIChatCompletionChoiceMessageContentItemModel.text(question),
+          ],
+          role: OpenAIChatMessageRole.user,
+        ),
+      );
+
       // Create the chat completion request
       final chatCompletion = await OpenAI.instance.chat.create(
         model: "gpt-4.1-mini-2025-04-14",
-        messages: [
-          OpenAIChatCompletionChoiceMessageModel(
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(
-                  _systemPrompt),
-            ],
-            role: OpenAIChatMessageRole.system,
-          ),
-          OpenAIChatCompletionChoiceMessageModel(
-            content: [
-              OpenAIChatCompletionChoiceMessageContentItemModel.text(question),
-            ],
-            role: OpenAIChatMessageRole.user,
-          ),
-        ],
+        messages: messages,
         temperature: 0.3, // Lower temperature for more focused responses
         maxTokens: 500,
       );

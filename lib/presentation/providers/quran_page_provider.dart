@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../core/utils/result.dart';
 import '../../domain/entities/quran_page_entity.dart';
 import '../../domain/entities/surah_entity.dart';
 import '../../data/datasources/quran_page_data.dart';
@@ -9,7 +10,8 @@ class QuranPageProvider with ChangeNotifier {
 
   QuranPageProvider(this._repository);
 
-  Map<int, Surah> _loadedSurahs = {}; // Map of surah number to full surah with verses
+  Map<int, Surah> _loadedSurahs =
+      {}; // Map of surah number to full surah with verses
   Map<int, QuranPage> _pagesCache = {};
   bool _isLoading = false;
   String? _error;
@@ -174,7 +176,9 @@ class QuranPageProvider with ChangeNotifier {
     final pagesToLoad = <int>[];
 
     for (int i = centerPage - range; i <= centerPage + range; i++) {
-      if (i >= 1 && i <= QuranPageData.totalPages && !_pagesCache.containsKey(i)) {
+      if (i >= 1 &&
+          i <= QuranPageData.totalPages &&
+          !_pagesCache.containsKey(i)) {
         pagesToLoad.add(i);
       }
     }

@@ -1,5 +1,5 @@
+import '../../core/utils/result.dart';
 import '../../core/errors/failures.dart';
-import '../entities/surah_entity.dart';
 import '../repositories/quran_repository_interface.dart';
 
 /// Use case for managing verse bookmarks

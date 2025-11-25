@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../core/utils/logger_service.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
@@ -180,9 +180,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
       );
       await _fetchAllData();
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error getting location: $e');
-      }
+      logger.error('Error getting location: $e');
       setState(() {
         _isLoading = false;
         _errorMessage =
@@ -218,9 +216,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
           String formattedTime = outputFormat.format(time);
           formattedTimings[key] = formattedTime;
         } catch (e) {
-          if (kDebugMode) {
-            debugPrint('Error parsing time for $key: $value - $e');
-          }
+          logger.warning('Error parsing time for $key: $value - $e');
           formattedTimings[key] = "Invalid Time";
         }
       });
@@ -247,9 +243,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
         _startCompassListening();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Error fetching data: $e');
-      }
+      logger.error('Error fetching data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -279,9 +273,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
         _startMagnetometerListening();
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Compass error: $e');
-      }
+      logger.warning('Compass error: $e');
       _startMagnetometerListening();
     }
   }
@@ -300,20 +292,18 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
         }
       });
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Magnetometer error: $e');
-      }
+      logger.warning('Magnetometer error: $e');
     }
   }
 
   /// Check if device is aligned with Qibla direction
   void _checkAlignment() {
     if (_qiblaDirection == null || _deviceHeading == null) return;
-    
+
     final relativeDirection = (_qiblaDirection! - _deviceHeading! + 360) % 360;
     final wasAligned = _isCompassAligned;
     _isCompassAligned = relativeDirection >= 350 || relativeDirection <= 10;
-    
+
     // Trigger haptic feedback when first aligned
     if (_isCompassAligned && !wasAligned) {
       HapticFeedback.lightImpact();
@@ -358,10 +348,8 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
             nextPrayer = prayerName;
           }
         } catch (e) {
-          if (kDebugMode) {
-            debugPrint(
-                'Error parsing prayer time for $prayerName: ${timings[prayerName]} - $e');
-          }
+          logger.warning(
+              'Error parsing prayer time for $prayerName: ${timings[prayerName]} - $e');
         }
       }
     }
@@ -385,9 +373,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
             String formattedTime = formatter.format(time);
             formattedTomorrowTimings[key] = formattedTime;
           } catch (e) {
-            if (kDebugMode) {
-              debugPrint('Error parsing tomorrow time for $key: $value - $e');
-            }
+            logger.warning('Error parsing tomorrow time for $key: $value - $e');
             formattedTomorrowTimings[key] = "Invalid Time";
           }
         });
@@ -408,17 +394,13 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
               nextPrayer = prayerName;
               break;
             } catch (e) {
-              if (kDebugMode) {
-                debugPrint(
-                    'Error parsing tomorrow prayer time for $prayerName: ${formattedTomorrowTimings[prayerName]} - $e');
-              }
+              logger.warning(
+                  'Error parsing tomorrow prayer time for $prayerName: ${formattedTomorrowTimings[prayerName]} - $e');
             }
           }
         }
       } catch (e) {
-        if (kDebugMode) {
-          debugPrint('Error fetching tomorrow prayer times: $e');
-        }
+        logger.error('Error fetching tomorrow prayer times: $e');
         // Fallback to default values
         _nextPrayer = "No upcoming prayers";
         _nextPrayerTime = "Not available";
@@ -705,12 +687,16 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                           ),
                     ),
                     Text(
-                      _isCompassAligned ? 'Aligned with Mecca' : 'Real-time Compass',
+                      _isCompassAligned
+                          ? 'Aligned with Mecca'
+                          : 'Real-time Compass',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: _isCompassAligned 
-                              ? Colors.green.shade100
-                              : Colors.white.withValues(alpha: 0.9),
-                            fontWeight: _isCompassAligned ? FontWeight.bold : FontWeight.normal,
+                            color: _isCompassAligned
+                                ? Colors.green.shade100
+                                : Colors.white.withValues(alpha: 0.9),
+                            fontWeight: _isCompassAligned
+                                ? FontWeight.bold
+                                : FontWeight.normal,
                           ),
                     ),
                   ],
@@ -719,7 +705,8 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
               // Compass Accuracy Indicator
               if (_compassAccuracy != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _getAccuracyColor().withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
@@ -736,7 +723,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
             ],
           ),
           const SizedBox(height: 24),
-          
+
           // Real-time Compass
           ScaleTransition(
             scale: _qiblaAnimation,
@@ -747,18 +734,20 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                 color: Colors.white.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: _isCompassAligned 
-                    ? Colors.green.withValues(alpha: 0.6)
-                    : Colors.white.withValues(alpha: 0.3),
+                  color: _isCompassAligned
+                      ? Colors.green.withValues(alpha: 0.6)
+                      : Colors.white.withValues(alpha: 0.3),
                   width: _isCompassAligned ? 3 : 2,
                 ),
-                boxShadow: _isCompassAligned ? [
-                  BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ] : null,
+                boxShadow: _isCompassAligned
+                    ? [
+                        BoxShadow(
+                          color: Colors.green.withValues(alpha: 0.3),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ]
+                    : null,
               ),
               child: Stack(
                 alignment: Alignment.center,
@@ -771,7 +760,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                       isAligned: _isCompassAligned,
                     ),
                   ),
-                  
+
                   // Qibla needle (green arrow pointing to Mecca)
                   if (_relativeQiblaDirection != null)
                     Transform.rotate(
@@ -784,23 +773,27 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
-                            colors: _isCompassAligned ? [
-                              Colors.green.shade300,
-                              Colors.green,
-                              Colors.green.shade700,
-                              Colors.transparent,
-                            ] : [
-                              Colors.white,
-                              Colors.white.withValues(alpha: 0.8),
-                              Colors.white.withValues(alpha: 0.4),
-                              Colors.transparent,
-                            ],
+                            colors: _isCompassAligned
+                                ? [
+                                    Colors.green.shade300,
+                                    Colors.green,
+                                    Colors.green.shade700,
+                                    Colors.transparent,
+                                  ]
+                                : [
+                                    Colors.white,
+                                    Colors.white.withValues(alpha: 0.8),
+                                    Colors.white.withValues(alpha: 0.4),
+                                    Colors.transparent,
+                                  ],
                             stops: const [0.0, 0.4, 0.7, 1.0],
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: (_isCompassAligned ? Colors.green : Colors.white)
-                                .withValues(alpha: 0.5),
+                              color: (_isCompassAligned
+                                      ? Colors.green
+                                      : Colors.white)
+                                  .withValues(alpha: 0.5),
                               blurRadius: _isCompassAligned ? 6 : 3,
                               spreadRadius: 1,
                             ),
@@ -808,7 +801,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                         ),
                       ),
                     ),
-                  
+
                   // North indicator (red dot)
                   Positioned(
                     top: 10,
@@ -821,28 +814,31 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                       ),
                     ),
                   ),
-                  
+
                   // Center pulse animation when aligned
                   AnimatedBuilder(
                     animation: _pulseController,
                     builder: (context, child) {
                       return Container(
-                        width: _isCompassAligned ? 
-                          12 + (4 * _pulseController.value) : 8,
-                        height: _isCompassAligned ? 
-                          12 + (4 * _pulseController.value) : 8,
+                        width: _isCompassAligned
+                            ? 12 + (4 * _pulseController.value)
+                            : 8,
+                        height: _isCompassAligned
+                            ? 12 + (4 * _pulseController.value)
+                            : 8,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: _isCompassAligned 
-                            ? Colors.green 
-                            : Colors.white,
-                          boxShadow: _isCompassAligned ? [
-                            BoxShadow(
-                              color: Colors.green.withValues(alpha: 0.6),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ] : null,
+                          color:
+                              _isCompassAligned ? Colors.green : Colors.white,
+                          boxShadow: _isCompassAligned
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.green.withValues(alpha: 0.6),
+                                    blurRadius: 6,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
                         ),
                       );
                     },
@@ -851,9 +847,9 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
               ),
             ),
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Direction Info Row
           Row(
             children: [
@@ -878,7 +874,10 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                           const SizedBox(width: 4),
                           Text(
                             'Qibla',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
                           ),
@@ -886,18 +885,19 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                       ),
                       Text(
                         '${_qiblaDirection?.toStringAsFixed(1) ?? "0.0"}°',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
                 ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Device Heading
               Expanded(
                 child: Container(
@@ -919,7 +919,10 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                           const SizedBox(width: 4),
                           Text(
                             'Heading',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
                                   color: Colors.white.withValues(alpha: 0.8),
                                 ),
                           ),
@@ -927,10 +930,11 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                       ),
                       Text(
                         '${_deviceHeading?.toStringAsFixed(0) ?? "---"}°',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
                       ),
                     ],
                   ),
@@ -938,7 +942,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
               ),
             ],
           ),
-          
+
           // Alignment Status
           if (_relativeQiblaDirection != null) ...[
             const SizedBox(height: 12),
@@ -946,12 +950,14 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
               duration: const Duration(milliseconds: 300),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
-                color: _isCompassAligned 
-                  ? Colors.green.withValues(alpha: 0.2)
-                  : Colors.white.withValues(alpha: 0.1),
+                color: _isCompassAligned
+                    ? Colors.green.withValues(alpha: 0.2)
+                    : Colors.white.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: _isCompassAligned ? Colors.green : Colors.white.withValues(alpha: 0.3),
+                  color: _isCompassAligned
+                      ? Colors.green
+                      : Colors.white.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -964,11 +970,13 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _isCompassAligned 
-                      ? 'Perfect Alignment!' 
-                      : 'Turn ${_relativeQiblaDirection! > 180 ? 'left' : 'right'} ${(_relativeQiblaDirection! > 180 ? 360 - _relativeQiblaDirection! : _relativeQiblaDirection!).toStringAsFixed(0)}°',
+                    _isCompassAligned
+                        ? 'Perfect Alignment!'
+                        : 'Turn ${_relativeQiblaDirection! > 180 ? 'left' : 'right'} ${(_relativeQiblaDirection! > 180 ? 360 - _relativeQiblaDirection! : _relativeQiblaDirection!).toStringAsFixed(0)}°',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: _isCompassAligned ? Colors.green.shade100 : Colors.white,
+                          color: _isCompassAligned
+                              ? Colors.green.shade100
+                              : Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                   ),
@@ -984,7 +992,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
   /// Get compass accuracy color
   Color _getAccuracyColor() {
     if (_compassAccuracy == null) return Colors.grey;
-    
+
     if (_compassAccuracy! >= 0 && _compassAccuracy! <= 15) {
       return Colors.green;
     } else if (_compassAccuracy! <= 30) {
@@ -997,7 +1005,7 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
   /// Get compass accuracy text
   String _getAccuracyText() {
     if (_compassAccuracy == null) return 'Unknown';
-    
+
     if (_compassAccuracy! >= 0 && _compassAccuracy! <= 15) {
       return 'High';
     } else if (_compassAccuracy! <= 30) {
@@ -1136,10 +1144,11 @@ class _PrayerTimesWidgetState extends State<PrayerTimesWidget>
                     ),
                     Text(
                       _nextPrayer ?? "Loading...",
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -1354,7 +1363,7 @@ class CompactCompassPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
-    
+
     // Major markings (every 45 degrees)
     final majorPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.4)
@@ -1381,7 +1390,8 @@ class CompactCompassPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     for (int i = 0; i < 12; i++) {
-      if (i % 2 != 0) { // Skip major markings
+      if (i % 2 != 0) {
+        // Skip major markings
         final angle = i * 30 * math.pi / 180;
         final startPoint = Offset(
           center.dx + (radius - 15) * math.cos(angle - math.pi / 2),

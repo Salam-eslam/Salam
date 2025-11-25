@@ -193,7 +193,7 @@ class _AccessibilitySettingsScreenState
           '$label ${isEnabled ? 'enabled' : 'disabled'}. Double tap to toggle.',
       child: Material(
         color: isEnabled
-            ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1)
             : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         child: InkWell(
@@ -205,7 +205,10 @@ class _AccessibilitySettingsScreenState
               border: Border.all(
                 color: isEnabled
                     ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                    : Theme.of(context)
+                        .colorScheme
+                        .outline
+                        .withValues(alpha: 0.3),
                 width: 2,
               ),
               borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -219,7 +222,7 @@ class _AccessibilitySettingsScreenState
                       : Theme.of(context)
                           .colorScheme
                           .onSurface
-                          .withOpacity(0.6),
+                          .withValues(alpha: 0.6),
                   size: 32,
                 ),
                 const SizedBox(height: AppTheme.spacingS),
@@ -231,7 +234,7 @@ class _AccessibilitySettingsScreenState
                             : Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.6),
+                                .withValues(alpha: 0.6),
                         fontWeight:
                             isEnabled ? FontWeight.bold : FontWeight.normal,
                       ),
@@ -653,6 +656,7 @@ class _AccessibilitySettingsScreenState
               }
             : null,
         icon: const Icon(Icons.vibration),
+        tooltip: 'Test haptic feedback',
       ),
     );
   }

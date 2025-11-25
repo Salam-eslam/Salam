@@ -5,8 +5,15 @@ import '../../data/repositories/quran_repository.dart';
 import '../../domain/repositories/quran_repository_interface.dart';
 import '../../domain/usecases/get_surah_usecase.dart';
 import '../../domain/usecases/manage_bookmarks_usecase.dart';
+import '../../domain/usecases/get_surah_translations_usecase.dart';
+import '../../domain/usecases/get_verse_translation_usecase.dart';
+import '../../domain/usecases/get_available_translations_usecase.dart';
+import '../../domain/usecases/get_verse_tafsir_usecase.dart';
+import '../../domain/usecases/get_available_tafsirs_usecase.dart';
 import '../../presentation/providers/bookmarks_provider.dart';
 import '../../presentation/providers/surah_provider.dart';
+import '../../presentation/providers/translation_provider.dart';
+import '../../presentation/providers/tafsir_provider.dart';
 
 /// Simple dependency injection container for clean architecture
 /// In a larger app, consider using GetIt, Riverpod, or Injectable
@@ -21,8 +28,15 @@ class DependencyInjection {
   static late QuranRepositoryInterface _quranRepository;
   static late GetSurahUseCase _getSurahUseCase;
   static late ManageBookmarksUseCase _manageBookmarksUseCase;
+  static late GetSurahTranslationsUseCase _getSurahTranslationsUseCase;
+  static late GetVerseTranslationUseCase _getVerseTranslationUseCase;
+  static late GetAvailableTranslationsUseCase _getAvailableTranslationsUseCase;
+  static late GetVerseTafsirUseCase _getVerseTafsirUseCase;
+  static late GetAvailableTafsirsUseCase _getAvailableTafsirsUseCase;
   static late BookmarksProvider _bookmarksProvider;
   static late SurahProvider _surahProvider;
+  static late TranslationProvider _translationProvider;
+  static late TafsirProvider _tafsirProvider;
 
   /// Initialize all dependencies
   static Future<void> init() async {
@@ -44,10 +58,26 @@ class DependencyInjection {
     // Use cases
     _getSurahUseCase = GetSurahUseCase(_quranRepository);
     _manageBookmarksUseCase = ManageBookmarksUseCase(_quranRepository);
+    _getSurahTranslationsUseCase =
+        GetSurahTranslationsUseCase(_quranRepository);
+    _getVerseTranslationUseCase = GetVerseTranslationUseCase(_quranRepository);
+    _getAvailableTranslationsUseCase =
+        GetAvailableTranslationsUseCase(_quranRepository);
+    _getVerseTafsirUseCase = GetVerseTafsirUseCase(_quranRepository);
+    _getAvailableTafsirsUseCase = GetAvailableTafsirsUseCase(_quranRepository);
 
     // Providers
     _bookmarksProvider = BookmarksProvider(_manageBookmarksUseCase);
     _surahProvider = SurahProvider(_getSurahUseCase);
+    _translationProvider = TranslationProvider(
+      getSurahTranslationsUseCase: _getSurahTranslationsUseCase,
+      getVerseTranslationUseCase: _getVerseTranslationUseCase,
+      getAvailableTranslationsUseCase: _getAvailableTranslationsUseCase,
+    );
+    _tafsirProvider = TafsirProvider(
+      getVerseTafsirUseCase: _getVerseTafsirUseCase,
+      getAvailableTafsirsUseCase: _getAvailableTafsirsUseCase,
+    );
 
     // Mark as initialized
     _isInitialized = true;
@@ -83,6 +113,18 @@ class DependencyInjection {
     return _surahProvider;
   }
 
+  /// Get the TranslationProvider instance
+  static TranslationProvider get translationProvider {
+    _ensureInitialized();
+    return _translationProvider;
+  }
+
+  /// Get the TafsirProvider instance
+  static TafsirProvider get tafsirProvider {
+    _ensureInitialized();
+    return _tafsirProvider;
+  }
+
   /// Factory method to create new providers when needed
   static BookmarksProvider createBookmarksProvider() {
     _ensureInitialized();
@@ -93,6 +135,25 @@ class DependencyInjection {
   static SurahProvider createSurahProvider() {
     _ensureInitialized();
     return SurahProvider(_getSurahUseCase);
+  }
+
+  /// Factory method to create new translation providers when needed
+  static TranslationProvider createTranslationProvider() {
+    _ensureInitialized();
+    return TranslationProvider(
+      getSurahTranslationsUseCase: _getSurahTranslationsUseCase,
+      getVerseTranslationUseCase: _getVerseTranslationUseCase,
+      getAvailableTranslationsUseCase: _getAvailableTranslationsUseCase,
+    );
+  }
+
+  /// Factory method to create new tafsir providers when needed
+  static TafsirProvider createTafsirProvider() {
+    _ensureInitialized();
+    return TafsirProvider(
+      getVerseTafsirUseCase: _getVerseTafsirUseCase,
+      getAvailableTafsirsUseCase: _getAvailableTafsirsUseCase,
+    );
   }
 
   /// Dispose resources when app closes

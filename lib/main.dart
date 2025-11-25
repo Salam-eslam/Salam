@@ -1,74 +1,110 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:provider/provider.dart';
-import 'package:screen_brightness/screen_brightness.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:dynamic_color/dynamic_color.dart';
-import 'package:timezone/data/latest.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'core/utils/dependency_injection.dart';
-import 'core/utils/app_theme.dart';
-import 'core/utils/route_observer.dart';
+import 'core/di/service_locator.dart';
+import 'core/utils/logger_service.dart';
 import 'data/models/cached_surah.dart';
 import 'data/models/bookmark.dart';
 import 'data/models/page_progress.dart';
+import 'domain/repositories/quran_repository_interface.dart';
+import 'presentation/providers/bookmarks_provider.dart';
+import 'presentation/providers/surah_provider.dart';
+import 'presentation/providers/translation_provider.dart';
+import 'presentation/providers/tafsir_provider.dart';
 import 'presentation/providers/preference_settings_provider.dart';
 import 'presentation/providers/reading_progress_provider.dart';
 import 'presentation/providers/enhanced_theme_provider.dart';
+import 'presentation/providers/reading_stats_provider.dart';
 import 'presentation/providers/chat_history_provider.dart';
 import 'presentation/providers/quran_page_provider.dart';
 import 'presentation/providers/page_progress_provider.dart';
 import 'presentation/screens/main_screen.dart';
 import 'presentation/screens/onboarding_screen.dart';
-import 'presentation/providers/cache_provider.dart';
 import 'services/auto_cache_service.dart';
 import 'services/prayer_notification_service.dart';
 import 'services/accessibility_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+    // Suppress Google Fonts AssetManifest errors (known hot reload issue)
+    FlutterError.onError = (FlutterErrorDetails details) {
+      final exception = details.exception;
+      if (exception.toString().contains('AssetManifest.json') ||
+          exception.toString().contains('google_fonts')) {
+        // Silently ignore Google Fonts loading errors - fallback fonts will be used
+        logger.debug(
+            'Google Fonts loading error suppressed (using fallback fonts)');
+        return;
+      }
+      // For all other errors, use default error handler
+      FlutterError.presentError(details);
+    };
 
-  // Initialize Hive for local storage
-  await Hive.initFlutter();
+    // Load environment variables
+    await dotenv.load(fileName: ".env");
 
-  // Register Hive adapters for cached models
-  Hive.registerAdapter(CachedSurahAdapter());
-  Hive.registerAdapter(CachedAyahAdapter());
-  Hive.registerAdapter(BookmarkAdapter());
-  Hive.registerAdapter(PageProgressAdapter());
+    // Initialize Supabase
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    );
 
-  // Initialize clean architecture dependencies
-  await DependencyInjection.init();
+    // Initialize Hive for local storage
+    await Hive.initFlutter();
 
-  // Initialize auto-preloading of popular surahs in background
-  _initializeCache();
+    // Register Hive adapters for cached models
+    Hive.registerAdapter(CachedSurahAdapter());
+    Hive.registerAdapter(CachedAyahAdapter());
+    Hive.registerAdapter(BookmarkAdapter());
+    Hive.registerAdapter(PageProgressAdapter());
 
-  // Initialize prayer notification service
-  _initializeServices();
+    // Initialize GetIt dependency injection
+    await setupDependencies();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => PreferenceSettingsProvider()),
-        ChangeNotifierProvider.value(
-            value: DependencyInjection.bookmarksProvider),
-        ChangeNotifierProvider.value(value: DependencyInjection.surahProvider),
-        ChangeNotifierProvider(create: (_) => ReadingProgressProvider()),
-        ChangeNotifierProvider(create: (_) => EnhancedThemeProvider()),
-        ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
-        ChangeNotifierProvider(
-          create: (_) => QuranPageProvider(DependencyInjection.quranRepository),
-        ),
-        ChangeNotifierProvider(create: (_) => PageProgressProvider()),
-      ],
-      child: const MyApp(),
-    ),
-  );
+    // Initialize auto-preloading of popular surahs in background
+    _initializeCache();
+
+    // Initialize prayer notification service
+    _initializeServices();
+
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => PreferenceSettingsProvider()),
+          ChangeNotifierProvider(create: (_) => getIt<BookmarksProvider>()),
+          ChangeNotifierProvider(create: (_) => getIt<SurahProvider>()),
+          ChangeNotifierProvider(create: (_) => getIt<TranslationProvider>()),
+          ChangeNotifierProvider(create: (_) => getIt<TafsirProvider>()),
+          ChangeNotifierProvider(create: (_) => ReadingProgressProvider()),
+          ChangeNotifierProvider(create: (_) => getIt<ReadingStatsProvider>()),
+          ChangeNotifierProvider(create: (_) => EnhancedThemeProvider()),
+          ChangeNotifierProvider(create: (_) => ChatHistoryProvider()),
+          ChangeNotifierProvider(
+            create: (_) => QuranPageProvider(getIt<QuranRepositoryInterface>()),
+          ),
+          ChangeNotifierProvider(create: (_) => PageProgressProvider()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+  }, (error, stack) {
+    // Catch async errors from google_fonts and suppress them
+    if (error.toString().contains('AssetManifest.json') ||
+        error.toString().contains('google_fonts')) {
+      logger
+          .debug('Google Fonts async error suppressed (using fallback fonts)');
+      return;
+    }
+    // For other errors, log to console
+    logger.error('Unhandled error: $error', error, stack);
+  });
 }
 
 void _initializeCache() {

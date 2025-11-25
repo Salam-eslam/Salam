@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:provider/provider.dart';
 import '../providers/preference_settings_provider.dart';
 import '../providers/enhanced_theme_provider.dart';
@@ -226,14 +225,17 @@ class _SettingsScreenState extends State<SettingsScreen>
                         _buildSettingsCard(
                           colorScheme: colorScheme,
                           children: [
-                            Consumer<EnhancedThemeProvider>(
-                              builder: (context, themeProvider, child) {
+                            Selector<EnhancedThemeProvider, double>(
+                              selector: (_, themeProvider) =>
+                                  themeProvider.arabicFontSize,
+                              builder: (context, arabicFontSize, child) {
+                                final themeProvider =
+                                    context.read<EnhancedThemeProvider>();
                                 return _buildSliderTile(
                                   icon: Icons.format_size,
                                   title: 'Arabic Text Size',
-                                  subtitle:
-                                      '${themeProvider.arabicFontSize.round()}px',
-                                  value: themeProvider.arabicFontSize,
+                                  subtitle: '${arabicFontSize.round()}px',
+                                  value: arabicFontSize,
                                   min: 14.0,
                                   max: 32.0,
                                   divisions: 18,
@@ -244,15 +246,20 @@ class _SettingsScreenState extends State<SettingsScreen>
                                 );
                               },
                             ),
-                            Consumer<EnhancedThemeProvider>(
-                              builder: (context, themeProvider, child) {
+                            Selector<EnhancedThemeProvider, bool>(
+                              selector: (_, themeProvider) =>
+                                  themeProvider.isNightReadingMode,
+                              builder: (context, isNightReadingMode, child) {
+                                final themeProvider =
+                                    context.read<EnhancedThemeProvider>();
                                 return _buildSwitchTile(
                                   icon: Icons.nightlight_round,
                                   title: 'Night Reading Mode',
-                                  subtitle: 'Dim screen for comfortable reading',
-                                  value: themeProvider.isNightReadingMode,
-                                  onChanged: (value) =>
-                                      themeProvider.enableNightReadingMode(value),
+                                  subtitle:
+                                      'Dim screen for comfortable reading',
+                                  value: isNightReadingMode,
+                                  onChanged: (value) => themeProvider
+                                      .enableNightReadingMode(value),
                                   colorScheme: colorScheme,
                                   color: colorScheme.secondary,
                                 );
@@ -485,7 +492,8 @@ class _SettingsScreenState extends State<SettingsScreen>
       trailing: Switch(
         value: value,
         onChanged: onChanged,
-        activeColor: color,
+        activeThumbColor: color,
+        activeTrackColor: color.withValues(alpha: 0.5),
       ),
     );
   }
@@ -667,23 +675,25 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Choose Theme Style'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: AppThemeStyle.values.length,
-            itemBuilder: (context, index) {
-              final style = AppThemeStyle.values[index];
-              return RadioListTile<AppThemeStyle>(
-                title: Text(style.name),
-                value: style,
-                groupValue: themeProvider.themeStyle,
-                onChanged: (value) {
-                  if (value != null) {
-                    themeProvider.setThemeStyle(value);
-                    Navigator.pop(context);
-                  }
-                },
-              );
+          child: RadioGroup<AppThemeStyle>(
+            groupValue: themeProvider.themeStyle,
+            onChanged: (value) {
+              if (value != null) {
+                themeProvider.setThemeStyle(value);
+                Navigator.pop(context);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: AppThemeStyle.values.length,
+              itemBuilder: (context, index) {
+                final style = AppThemeStyle.values[index];
+                return RadioListTile<AppThemeStyle>(
+                  title: Text(style.name),
+                  value: style,
+                );
+              },
+            ),
           ),
         ),
         actions: [
@@ -704,23 +714,25 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Choose Arabic Font'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: ArabicFontFamily.values.length,
-            itemBuilder: (context, index) {
-              final font = ArabicFontFamily.values[index];
-              return RadioListTile<ArabicFontFamily>(
-                title: Text(font.displayName),
-                value: font,
-                groupValue: themeProvider.arabicFont,
-                onChanged: (value) {
-                  if (value != null) {
-                    themeProvider.setArabicFont(value);
-                    Navigator.pop(context);
-                  }
-                },
-              );
+          child: RadioGroup<ArabicFontFamily>(
+            groupValue: themeProvider.arabicFont,
+            onChanged: (value) {
+              if (value != null) {
+                themeProvider.setArabicFont(value);
+                Navigator.pop(context);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: ArabicFontFamily.values.length,
+              itemBuilder: (context, index) {
+                final font = ArabicFontFamily.values[index];
+                return RadioListTile<ArabicFontFamily>(
+                  title: Text(font.displayName),
+                  value: font,
+                );
+              },
+            ),
           ),
         ),
         actions: [
@@ -741,26 +753,30 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Choose Translation'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: PreferenceSettingsProvider.availableTranslations.length,
-            itemBuilder: (context, index) {
-              final key = PreferenceSettingsProvider.availableTranslations.keys
-                  .elementAt(index);
-              final value =
-                  PreferenceSettingsProvider.availableTranslations[key]!;
-              return RadioListTile<String>(
-                title: Text(value),
-                value: key,
-                groupValue: prefProvider.selectedTranslation,
-                onChanged: (selectedKey) {
-                  if (selectedKey != null) {
-                    prefProvider.setSelectedTranslation(selectedKey);
-                    Navigator.pop(context);
-                  }
-                },
-              );
+          child: RadioGroup<String>(
+            groupValue: prefProvider.selectedTranslation,
+            onChanged: (selectedKey) {
+              if (selectedKey != null) {
+                prefProvider.setSelectedTranslation(selectedKey);
+                Navigator.pop(context);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount:
+                  PreferenceSettingsProvider.availableTranslations.length,
+              itemBuilder: (context, index) {
+                final key = PreferenceSettingsProvider
+                    .availableTranslations.keys
+                    .elementAt(index);
+                final value =
+                    PreferenceSettingsProvider.availableTranslations[key]!;
+                return RadioListTile<String>(
+                  title: Text(value),
+                  value: key,
+                );
+              },
+            ),
           ),
         ),
         actions: [
@@ -781,25 +797,27 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Choose Tafsir'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: PreferenceSettingsProvider.availableTafsir.length,
-            itemBuilder: (context, index) {
-              final key = PreferenceSettingsProvider.availableTafsir.keys
-                  .elementAt(index);
-              final value = PreferenceSettingsProvider.availableTafsir[key]!;
-              return RadioListTile<String>(
-                title: Text(value),
-                value: key,
-                groupValue: prefProvider.selectedTafsir,
-                onChanged: (selectedKey) {
-                  if (selectedKey != null) {
-                    prefProvider.setSelectedTafsir(selectedKey);
-                    Navigator.pop(context);
-                  }
-                },
-              );
+          child: RadioGroup<String>(
+            groupValue: prefProvider.selectedTafsir,
+            onChanged: (selectedKey) {
+              if (selectedKey != null) {
+                prefProvider.setSelectedTafsir(selectedKey);
+                Navigator.pop(context);
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: PreferenceSettingsProvider.availableTafsir.length,
+              itemBuilder: (context, index) {
+                final key = PreferenceSettingsProvider.availableTafsir.keys
+                    .elementAt(index);
+                final value = PreferenceSettingsProvider.availableTafsir[key]!;
+                return RadioListTile<String>(
+                  title: Text(value),
+                  value: key,
+                );
+              },
+            ),
           ),
         ),
         actions: [
@@ -1191,24 +1209,26 @@ class _SettingsScreenState extends State<SettingsScreen>
         title: const Text('Choose Voice Language'),
         content: SizedBox(
           width: double.maxFinite,
-          child: ListView.builder(
-            shrinkWrap: true,
-            itemCount: TtsLanguage.values.length,
-            itemBuilder: (context, index) {
-              final language = TtsLanguage.values[index];
-              return RadioListTile<TtsLanguage>(
-                title: Text(language.displayName),
-                value: language,
-                groupValue: _accessibilityService.ttsLanguage,
-                onChanged: (value) {
-                  if (value != null) {
-                    _accessibilityService.setTtsLanguage(value);
-                    Navigator.pop(context);
-                    setState(() {});
-                  }
-                },
-              );
+          child: RadioGroup<TtsLanguage>(
+            groupValue: _accessibilityService.ttsLanguage,
+            onChanged: (value) {
+              if (value != null) {
+                _accessibilityService.setTtsLanguage(value);
+                Navigator.pop(context);
+                setState(() {});
+              }
             },
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: TtsLanguage.values.length,
+              itemBuilder: (context, index) {
+                final language = TtsLanguage.values[index];
+                return RadioListTile<TtsLanguage>(
+                  title: Text(language.displayName),
+                  value: language,
+                );
+              },
+            ),
           ),
         ),
         actions: [
@@ -1270,856 +1290,5 @@ class _SettingsScreenState extends State<SettingsScreen>
     );
   }
 }
-
-// Beautiful About Screen
-class _AboutScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<EnhancedThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final colorScheme = Theme.of(context).colorScheme;
-        final isDarkTheme = themeProvider.isDarkTheme(context);
-
-        return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkTheme
-                    ? [colorScheme.surface, colorScheme.surfaceContainerHighest]
-                    : [
-                        colorScheme.surface,
-                        colorScheme.surfaceContainerHighest
-                      ],
-              ),
-            ),
-            child: CustomScrollView(
-              slivers: [
-                // Hero App Bar
-                SliverAppBar(
-                  expandedHeight: 200,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  flexibleSpace: FlexibleSpaceBar(
-                    title: const Text(
-                      'About Quran App',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: themeProvider.currentGradient,
-                      ),
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 40),
-                            Icon(
-                              Icons.menu_book,
-                              size: 80,
-                              color: Colors.white,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Digital Quran Companion',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Content
-                SliverToBoxAdapter(
-                  child: AnimationLimiter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: AnimationConfiguration.toStaggeredList(
-                          duration: const Duration(milliseconds: 375),
-                          childAnimationBuilder: (widget) => SlideAnimation(
-                            verticalOffset: 50.0,
-                            child: FadeInAnimation(child: widget),
-                          ),
-                          children: [
-                            // Description Card
-                            _buildInfoCard(
-                              context,
-                              colorScheme,
-                              Icons.info_outline,
-                              'About',
-                              'A comprehensive digital companion for reading the Holy Quran with modern features and accessibility support.',
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Features Section
-                            _buildFeaturesCard(context, colorScheme),
-
-                            const SizedBox(height: 20),
-
-                            // Version Info
-                            _buildVersionCard(context, colorScheme),
-
-                            const SizedBox(height: 20),
-
-                            // Credits
-                            _buildCreditsCard(context, colorScheme),
-
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoCard(BuildContext context, ColorScheme colorScheme,
-      IconData icon, String title, String description) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: colorScheme.primary, size: 32),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFeaturesCard(BuildContext context, ColorScheme colorScheme) {
-    final features = [
-      {
-        'icon': Icons.menu_book,
-        'title': 'Complete Quran',
-        'desc': 'All 114 surahs with audio recitations'
-      },
-      {
-        'icon': Icons.translate,
-        'title': 'Multiple Translations',
-        'desc': 'Various language translations and tafsir'
-      },
-      {
-        'icon': Icons.access_time,
-        'title': 'Prayer Times',
-        'desc': 'Accurate prayer times and Qibla direction'
-      },
-      {
-        'icon': Icons.calendar_today,
-        'title': 'Islamic Calendar',
-        'desc': 'Hijri calendar with Islamic events'
-      },
-      {
-        'icon': Icons.offline_bolt,
-        'title': 'Offline Reading',
-        'desc': 'Download content for offline access'
-      },
-      {
-        'icon': Icons.bookmark,
-        'title': 'Smart Bookmarks',
-        'desc': 'Intelligent bookmarking with personal notes'
-      },
-      {
-        'icon': Icons.accessibility,
-        'title': 'Accessibility',
-        'desc': 'Full TTS support and visual options'
-      },
-      {
-        'icon': Icons.palette,
-        'title': 'Custom Themes',
-        'desc': 'Beautiful themes and font customization'
-      },
-    ];
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child:
-                      Icon(Icons.star, color: colorScheme.secondary, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'Key Features',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 3.5,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemCount: features.length,
-              itemBuilder: (context, index) {
-                final feature = features[index];
-                return Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surface,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        feature['icon'] as IconData,
-                        color: colorScheme.primary,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              feature['title'] as String,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              feature['desc'] as String,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                    fontSize: 10,
-                                  ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVersionCard(BuildContext context, ColorScheme colorScheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.tertiary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.system_update,
-                      color: colorScheme.tertiary, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Version Information',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Version 2.0.0',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: colorScheme.primary,
-                                ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Icon(Icons.flutter_dash, color: colorScheme.primary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Built with Flutter and Material 3 Design',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.cloud, color: colorScheme.secondary, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Powered by Al-Quran Cloud API',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreditsCard(BuildContext context, ColorScheme colorScheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.favorite,
-                      color: Colors.orange, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  'Acknowledgments',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            _buildCreditItem(context, colorScheme, Icons.book, 'Al-Quran Cloud',
-                'Quran text and audio recitations'),
-            _buildCreditItem(context, colorScheme, Icons.mic,
-                'Recitation Sources', 'Multiple reciters and audio quality'),
-            _buildCreditItem(context, colorScheme, Icons.translate,
-                'Translation Teams', 'Various language translations'),
-            _buildCreditItem(context, colorScheme, Icons.code, 'Open Source',
-                'Flutter framework and packages'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreditItem(BuildContext context, ColorScheme colorScheme,
-      IconData icon, String title, String description) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Row(
-        children: [
-          Icon(icon, color: colorScheme.primary, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-                Text(
-                  description,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 // Beautiful Help Screen
-class _HelpScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Consumer<EnhancedThemeProvider>(
-      builder: (context, themeProvider, child) {
-        final colorScheme = Theme.of(context).colorScheme;
-        final isDarkTheme = themeProvider.isDarkTheme(context);
-
-        return Scaffold(
-          body: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDarkTheme
-                    ? [colorScheme.surface, colorScheme.surfaceContainerHighest]
-                    : [
-                        colorScheme.surface,
-                        colorScheme.surfaceContainerHighest
-                      ],
-              ),
-            ),
-            child: CustomScrollView(
-              slivers: [
-                // Hero App Bar
-                SliverAppBar(
-                  expandedHeight: 200,
-                  floating: false,
-                  pinned: true,
-                  backgroundColor: Colors.transparent,
-                  elevation: 0,
-                  flexibleSpace: FlexibleSpaceBar(
-                    title: const Text(
-                      'Help & Support',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    background: Container(
-                      decoration: BoxDecoration(
-                        gradient: themeProvider.currentGradient,
-                      ),
-                      child: const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: 40),
-                            Icon(
-                              Icons.help_outline,
-                              size: 80,
-                              color: Colors.white,
-                            ),
-                            SizedBox(height: 8),
-                            Text(
-                              'Get help using the app',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Content
-                SliverToBoxAdapter(
-                  child: AnimationLimiter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20.0),
-                      child: Column(
-                        children: AnimationConfiguration.toStaggeredList(
-                          duration: const Duration(milliseconds: 375),
-                          childAnimationBuilder: (widget) => SlideAnimation(
-                            verticalOffset: 50.0,
-                            child: FadeInAnimation(child: widget),
-                          ),
-                          children: [
-                            // Getting Started
-                            _buildHelpSection(
-                              context,
-                              colorScheme,
-                              Icons.play_circle_fill,
-                              'Getting Started',
-                              [
-                                'Tap on any Surah to start reading',
-                                'Use the audio button to listen to recitations',
-                                'Swipe between pages for smooth navigation',
-                                'Access quick settings from the bottom navigation',
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Reading Features
-                            _buildHelpSection(
-                              context,
-                              colorScheme,
-                              Icons.bookmark,
-                              'Reading Features',
-                              [
-                                'Long-press verses to bookmark them',
-                                'Add personal notes to your bookmarks',
-                                'Use search to find specific verses',
-                                'Track your reading progress automatically',
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Accessibility
-                            _buildHelpSection(
-                              context,
-                              colorScheme,
-                              Icons.accessibility_new,
-                              'Accessibility Features',
-                              [
-                                'Enable text-to-speech for voice reading',
-                                'Adjust font sizes and contrast for better visibility',
-                                'Reduce animations for motion sensitivity',
-                                'Use high contrast mode for better readability',
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Offline Features
-                            _buildHelpSection(
-                              context,
-                              colorScheme,
-                              Icons.offline_bolt,
-                              'Offline Features',
-                              [
-                                'Download content for offline reading',
-                                'Manage cache and storage in settings',
-                                'Content syncs automatically when online',
-                                'Offline prayer times and Qibla direction',
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Support Contact
-                            _buildContactCard(context, colorScheme),
-
-                            const SizedBox(height: 40),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHelpSection(BuildContext context, ColorScheme colorScheme,
-      IconData icon, String title, List<String> items) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: colorScheme.primary, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
-                      ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ...items
-                .map((item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            margin: const EdgeInsets.only(top: 6),
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              item,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(
-                                    color: colorScheme.onSurfaceVariant,
-                                  ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ))
-                .toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildContactCard(BuildContext context, ColorScheme colorScheme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.1),
-            spreadRadius: 1,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.secondary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(Icons.support_agent,
-                      color: colorScheme.secondary, size: 32),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Need More Help?',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: colorScheme.onSurface,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Contact us through the app store for additional support and feedback.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Opening app store feedback...'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.feedback),
-                    label: const Text('Send Feedback'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
-                      foregroundColor: colorScheme.onPrimary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Opening FAQ...'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.help),
-                    label: const Text('View FAQ'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// ignore: unused_element

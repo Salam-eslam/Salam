@@ -214,6 +214,50 @@ class QuranRemoteDataSource {
     }
   }
 
+  /// Fetch surah with tafsir (commentary)
+  /// Note: Tafsir editions use same API pattern as translations
+  Future<Map<String, dynamic>> getSurahWithTafsir(
+    int surahNumber,
+    String tafsirKey,
+  ) async {
+    try {
+      final response = await client.get(
+        Uri.parse(
+            '${AppConstants.quranApiBaseUrl}/surah/$surahNumber/$tafsirKey'),
+        headers: {'Accept': 'application/json'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['status'] == 'OK' && data['data'] != null) {
+          return data['data'];
+        } else {
+          throw ServerFailure(
+            message: 'Invalid API response format for tafsir',
+            code: response.statusCode,
+          );
+        }
+      } else if (response.statusCode == 404) {
+        throw ServerFailure(
+          message: 'Tafsir not found: $tafsirKey',
+          code: 404,
+        );
+      } else {
+        throw ServerFailure(
+          message: 'Failed to fetch tafsir: ${response.reasonPhrase}',
+          code: response.statusCode,
+        );
+      }
+    } on TimeoutException {
+      throw const TimeoutFailure();
+    } on http.ClientException catch (e) {
+      throw NetworkFailure(message: 'Network error: ${e.message}');
+    } catch (e) {
+      if (e is Failure) rethrow;
+      throw ServerFailure(message: 'Unexpected error: $e');
+    }
+  }
+
   // ========================= SEARCH OPERATIONS =========================
 
   /// Search for verses containing specific text

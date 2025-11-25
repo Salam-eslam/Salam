@@ -147,7 +147,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                   verse.translation!,
                                   style: theme.textTheme.bodyMedium?.copyWith(
                                     color: theme.colorScheme.onSurface
-                                        .withOpacity(0.7),
+                                        .withValues(alpha: 0.7),
                                   ),
                                 )
                               : null,

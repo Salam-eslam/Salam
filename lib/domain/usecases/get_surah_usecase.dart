@@ -1,4 +1,5 @@
 import '../../core/errors/failures.dart';
+import '../../core/utils/result.dart';
 import '../entities/surah_entity.dart';
 import '../repositories/quran_repository_interface.dart';
 
@@ -185,4 +186,3 @@ class GetSurahUseCase {
     return Success(surahWithTranslation);
   }
 }
- 

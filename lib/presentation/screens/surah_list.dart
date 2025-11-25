@@ -137,14 +137,17 @@ class _SurahListScreenState extends State<SurahListScreen>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Consumer3<SurahProvider, PreferenceSettingsProvider, EnhancedThemeProvider>(
-        builder: (context, surahProvider, preferenceProvider, themeProvider, child) {
+      body: Consumer3<SurahProvider, PreferenceSettingsProvider,
+          EnhancedThemeProvider>(
+        builder:
+            (context, surahProvider, preferenceProvider, themeProvider, child) {
           if (surahProvider.isLoading) {
             return _buildLoadingState();
           }
 
           if (surahProvider.errorMessage != null) {
-            return _buildErrorState(surahProvider, themeProvider.isDarkTheme(context));
+            return _buildErrorState(
+                surahProvider, themeProvider.isDarkTheme(context));
           }
 
           return CustomScrollView(
@@ -159,7 +162,8 @@ class _SurahListScreenState extends State<SurahListScreen>
               if (!_isSearchActive)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 16),
                     child: _buildMushafCard(colorScheme),
                   ),
                 ),
@@ -279,8 +283,6 @@ class _SurahListScreenState extends State<SurahListScreen>
     );
   }
 
-
-
   Widget _buildSearchSection(ColorScheme colorScheme) {
     return SliverToBoxAdapter(
       child: Container(
@@ -329,6 +331,7 @@ class _SurahListScreenState extends State<SurahListScreen>
                             Icons.clear_rounded,
                             color: colorScheme.onSurfaceVariant,
                           ),
+                          tooltip: 'Clear search',
                           onPressed: () {
                             _searchController.clear();
                             _performSearch('');
@@ -405,7 +408,10 @@ class _SurahListScreenState extends State<SurahListScreen>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
+                      Theme.of(context)
+                          .colorScheme
+                          .error
+                          .withValues(alpha: 0.1),
                       Theme.of(context)
                           .colorScheme
                           .errorContainer
@@ -612,13 +618,15 @@ class _SurahListScreenState extends State<SurahListScreen>
           delegate: SliverChildBuilderDelegate(
             (context, index) {
               final surah = _filteredSurahs[index];
-              return AnimationConfiguration.staggeredList(
-                position: index,
-                duration: const Duration(milliseconds: 375),
-                child: SlideAnimation(
-                  verticalOffset: 50.0,
-                  child: FadeInAnimation(
-                    child: _buildEnhancedSurahCard(surah),
+              return RepaintBoundary(
+                child: AnimationConfiguration.staggeredList(
+                  position: index,
+                  duration: const Duration(milliseconds: 375),
+                  child: SlideAnimation(
+                    verticalOffset: 50.0,
+                    child: FadeInAnimation(
+                      child: _buildEnhancedSurahCard(surah),
+                    ),
                   ),
                 ),
               );
@@ -844,7 +852,7 @@ class _SurahListScreenState extends State<SurahListScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF667eea).withOpacity(0.3),
+            color: const Color(0xFF667eea).withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -871,7 +879,7 @@ class _SurahListScreenState extends State<SurahListScreen>
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Icon(
@@ -899,7 +907,7 @@ class _SurahListScreenState extends State<SurahListScreen>
                       Text(
                         'Read the Holy Quran - 604 Pages',
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 14,
                         ),
                       ),
@@ -911,7 +919,7 @@ class _SurahListScreenState extends State<SurahListScreen>
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(

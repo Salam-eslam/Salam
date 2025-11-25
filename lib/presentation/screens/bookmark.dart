@@ -109,9 +109,10 @@ class _BookmarkScreenState extends State<BookmarkScreen>
           },
         ),
       ),
-      floatingActionButton: Consumer<BookmarksProvider>(
-        builder: (context, bookmarksProvider, child) {
-          return bookmarksProvider.bookmarks.isEmpty
+      floatingActionButton: Selector<BookmarksProvider, int>(
+        selector: (_, bookmarksProvider) => bookmarksProvider.bookmarks.length,
+        builder: (context, bookmarkCount, child) {
+          return bookmarkCount == 0
               ? const SizedBox.shrink()
               : ScaleTransition(
                   scale: _floatingButtonController,
@@ -211,8 +212,6 @@ class _BookmarkScreenState extends State<BookmarkScreen>
     );
   }
 
-
-
   Widget _buildSearchSection(ColorScheme colorScheme) {
     return SliverToBoxAdapter(
       child: Container(
@@ -262,6 +261,7 @@ class _BookmarkScreenState extends State<BookmarkScreen>
                         Icons.clear_rounded,
                         color: colorScheme.onSurfaceVariant,
                       ),
+                      tooltip: 'Clear search',
                       onPressed: () {
                         _searchController.clear();
                         setState(() {
@@ -380,8 +380,6 @@ class _BookmarkScreenState extends State<BookmarkScreen>
       ),
     );
   }
-
-
 
   Widget _buildModernEmptyState(ColorScheme colorScheme) {
     return SingleChildScrollView(
@@ -897,6 +895,7 @@ class _BookmarkScreenState extends State<BookmarkScreen>
                               size: 18,
                               color: colorScheme.primary,
                             ),
+                            tooltip: 'Open surah',
                             onPressed: () {
                               Navigator.push(
                                 context,

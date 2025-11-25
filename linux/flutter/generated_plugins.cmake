@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_linux
   dynamic_color
+  gtk
   url_launcher_linux
 )
 

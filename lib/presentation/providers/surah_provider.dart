@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/result.dart';
 import '../../domain/entities/surah_entity.dart';
-import '../../domain/repositories/quran_repository_interface.dart';
 import '../../domain/usecases/get_surah_usecase.dart';
 
 /// Provider for managing Quran surahs following clean architecture

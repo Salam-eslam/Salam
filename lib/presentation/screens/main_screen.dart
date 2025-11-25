@@ -98,6 +98,9 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
                   isDarkTheme ? Icons.light_mode : Icons.dark_mode,
                   color: colorScheme.onSurface,
                 ),
+                tooltip: isDarkTheme
+                    ? 'Switch to light mode'
+                    : 'Switch to dark mode',
                 onPressed: () {
                   final newMode =
                       isDarkTheme ? ThemeMode.light : ThemeMode.dark;

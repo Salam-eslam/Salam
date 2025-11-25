@@ -152,7 +152,7 @@ class _SearchScreenState extends State<SearchScreen>
                                 color: Theme.of(context)
                                     .colorScheme
                                     .onPrimary
-                                    .withOpacity(0.2),
+                                    .withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Icon(
@@ -188,7 +188,7 @@ class _SearchScreenState extends State<SearchScreen>
                                           color: Theme.of(context)
                                               .colorScheme
                                               .onPrimary
-                                              .withOpacity(0.9),
+                                              .withValues(alpha: 0.9),
                                         ),
                                   ),
                                 ],
@@ -223,6 +223,7 @@ class _SearchScreenState extends State<SearchScreen>
                           suffixIcon: _currentQuery.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.clear, size: 18),
+                                  tooltip: 'Clear search',
                                   onPressed: () {
                                     _searchController.clear();
                                     _performSearch('');
@@ -338,7 +339,7 @@ class _SearchScreenState extends State<SearchScreen>
               color: Theme.of(context)
                   .colorScheme
                   .errorContainer
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -387,7 +388,7 @@ class _SearchScreenState extends State<SearchScreen>
               color: Theme.of(context)
                   .colorScheme
                   .primaryContainer
-                  .withOpacity(0.3),
+                  .withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -454,8 +455,8 @@ class _SearchScreenState extends State<SearchScreen>
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(
             color: isHighlighted
-                ? theme.colorScheme.primary.withOpacity(0.5)
-                : theme.colorScheme.outline.withOpacity(0.2),
+                ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                : theme.colorScheme.outline.withValues(alpha: 0.2),
             width: isHighlighted ? 2 : 1,
           ),
         ),

@@ -1,6 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../domain/entities/quran_page_entity.dart';
+
+// Helper functions for consistent font styling using system fonts
+TextStyle _safeAmiriFont({
+  double? fontSize,
+  FontWeight? fontWeight,
+  Color? color,
+  double? height,
+  double? letterSpacing,
+}) {
+  return TextStyle(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontFamily: 'serif', // System serif font for Arabic text
+  );
+}
+
+TextStyle _safeLatoFont({
+  double? fontSize,
+  FontWeight? fontWeight,
+  Color? color,
+  double? height,
+  double? letterSpacing,
+}) {
+  return TextStyle(
+    fontSize: fontSize,
+    fontWeight: fontWeight,
+    color: color,
+    height: height,
+    letterSpacing: letterSpacing,
+    fontFamily: 'sans-serif', // System sans-serif font
+  );
+}
 
 class QuranPageWidget extends StatelessWidget {
   final QuranPage page;
@@ -26,12 +60,12 @@ class QuranPageWidget extends StatelessWidget {
         color: backgroundColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: textColor.withOpacity(0.15),
+          color: textColor.withValues(alpha: 0.15),
           width: 2,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 20,
             offset: const Offset(0, 4),
             spreadRadius: 2,
@@ -71,7 +105,7 @@ class QuranPageWidget extends StatelessWidget {
           child: CustomPaint(
             size: const Size(40, 40),
             painter: _CornerOrnamentPainter(
-              color: textColor.withOpacity(0.15),
+              color: textColor.withValues(alpha: 0.15),
               isTopLeft: true,
             ),
           ),
@@ -83,7 +117,7 @@ class QuranPageWidget extends StatelessWidget {
           child: CustomPaint(
             size: const Size(40, 40),
             painter: _CornerOrnamentPainter(
-              color: textColor.withOpacity(0.15),
+              color: textColor.withValues(alpha: 0.15),
               isTopRight: true,
             ),
           ),
@@ -95,7 +129,7 @@ class QuranPageWidget extends StatelessWidget {
           child: CustomPaint(
             size: const Size(40, 40),
             painter: _CornerOrnamentPainter(
-              color: textColor.withOpacity(0.15),
+              color: textColor.withValues(alpha: 0.15),
               isBottomLeft: true,
             ),
           ),
@@ -107,7 +141,7 @@ class QuranPageWidget extends StatelessWidget {
           child: CustomPaint(
             size: const Size(40, 40),
             painter: _CornerOrnamentPainter(
-              color: textColor.withOpacity(0.15),
+              color: textColor.withValues(alpha: 0.15),
               isBottomRight: true,
             ),
           ),
@@ -122,7 +156,7 @@ class QuranPageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            textColor.withOpacity(0.05),
+            textColor.withValues(alpha: 0.05),
             backgroundColor,
           ],
           begin: Alignment.topCenter,
@@ -130,7 +164,7 @@ class QuranPageWidget extends StatelessWidget {
         ),
         border: Border(
           bottom: BorderSide(
-            color: textColor.withOpacity(0.2),
+            color: textColor.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
@@ -144,13 +178,13 @@ class QuranPageWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    textColor.withOpacity(0.12),
-                    textColor.withOpacity(0.08),
+                    textColor.withValues(alpha: 0.12),
+                    textColor.withValues(alpha: 0.08),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: textColor.withOpacity(0.2),
+                  color: textColor.withValues(alpha: 0.2),
                   width: 1,
                 ),
               ),
@@ -160,15 +194,15 @@ class QuranPageWidget extends StatelessWidget {
                   Icon(
                     Icons.bookmark_outline,
                     size: 14,
-                    color: textColor.withOpacity(0.7),
+                    color: textColor.withValues(alpha: 0.7),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'الجزء ${_arabicNumber(page.juzNumber)}',
-                    style: GoogleFonts.amiri(
+                    style: _safeAmiriFont(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: textColor.withOpacity(0.8),
+                      color: textColor.withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -179,7 +213,7 @@ class QuranPageWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Text(
               page.ayahs.isNotEmpty ? page.ayahs.first.surahNameArabic : '',
-              style: GoogleFonts.amiri(
+              style: _safeAmiriFont(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: textColor,
@@ -198,8 +232,7 @@ class QuranPageWidget extends StatelessWidget {
       child: Column(
         children: [
           // Check if this is the start of a new surah
-          if (_isNewSurahStart())
-            _buildSurahHeader(),
+          if (_isNewSurahStart()) _buildSurahHeader(),
 
           // Build the ayahs in a flowing text format
           _buildAyahsText(),
@@ -213,7 +246,9 @@ class QuranPageWidget extends StatelessWidget {
 
     // Check if first ayah is the first ayah of a surah (excluding Al-Fatihah and At-Tawbah)
     final firstAyah = page.ayahs.first;
-    if (firstAyah.numberInSurah == 1 && firstAyah.surahNumber != 1 && firstAyah.surahNumber != 9) {
+    if (firstAyah.numberInSurah == 1 &&
+        firstAyah.surahNumber != 1 &&
+        firstAyah.surahNumber != 9) {
       return true;
     }
 
@@ -238,16 +273,16 @@ class QuranPageWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  textColor.withOpacity(0.08),
-                  textColor.withOpacity(0.04),
-                  textColor.withOpacity(0.08),
+                  textColor.withValues(alpha: 0.08),
+                  textColor.withValues(alpha: 0.04),
+                  textColor.withValues(alpha: 0.08),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: textColor.withOpacity(0.15),
+                color: textColor.withValues(alpha: 0.15),
                 width: 1.5,
               ),
             ),
@@ -256,7 +291,7 @@ class QuranPageWidget extends StatelessWidget {
                 // Surah name in Arabic
                 Text(
                   'سُورَةُ ${firstAyah.surahNameArabic}',
-                  style: GoogleFonts.amiri(
+                  style: _safeAmiriFont(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: textColor,
@@ -271,10 +306,10 @@ class QuranPageWidget extends StatelessWidget {
                 // Surah name in English
                 Text(
                   firstAyah.surahName,
-                  style: GoogleFonts.lato(
+                  style: _safeLatoFont(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: textColor.withOpacity(0.6),
+                    color: textColor.withValues(alpha: 0.6),
                     letterSpacing: 1.5,
                   ),
                   textAlign: TextAlign.center,
@@ -291,10 +326,10 @@ class QuranPageWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
               child: Text(
                 'بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ',
-                style: GoogleFonts.amiri(
+                style: _safeAmiriFont(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: textColor.withOpacity(0.9),
+                  color: textColor.withValues(alpha: 0.9),
                   height: 2,
                   letterSpacing: 0.5,
                 ),
@@ -326,8 +361,8 @@ class QuranPageWidget extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                textColor.withOpacity(0.4),
-                textColor.withOpacity(0.1),
+                textColor.withValues(alpha: 0.4),
+                textColor.withValues(alpha: 0.1),
               ],
             ),
           ),
@@ -339,7 +374,7 @@ class QuranPageWidget extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: textColor.withOpacity(0.3),
+              color: textColor.withValues(alpha: 0.3),
               width: 1.5,
             ),
           ),
@@ -352,8 +387,8 @@ class QuranPageWidget extends StatelessWidget {
             shape: BoxShape.circle,
             gradient: RadialGradient(
               colors: [
-                textColor.withOpacity(0.4),
-                textColor.withOpacity(0.1),
+                textColor.withValues(alpha: 0.4),
+                textColor.withValues(alpha: 0.1),
               ],
             ),
           ),
@@ -371,9 +406,9 @@ class QuranPageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            textColor.withOpacity(0),
-            textColor.withOpacity(0.3),
-            textColor.withOpacity(0),
+            textColor.withValues(alpha: 0),
+            textColor.withValues(alpha: 0.3),
+            textColor.withValues(alpha: 0),
           ],
         ),
       ),
@@ -386,7 +421,7 @@ class QuranPageWidget extends StatelessWidget {
       child: RichText(
         textAlign: TextAlign.justify,
         text: TextSpan(
-          style: GoogleFonts.amiri(
+          style: _safeAmiriFont(
             fontSize: fontSize,
             height: 2.2,
             color: textColor,
@@ -401,7 +436,7 @@ class QuranPageWidget extends StatelessWidget {
                   style: TextStyle(
                     shadows: [
                       Shadow(
-                        color: textColor.withOpacity(0.1),
+                        color: textColor.withValues(alpha: 0.1),
                         offset: const Offset(0, 0.5),
                         blurRadius: 0.5,
                       ),
@@ -413,24 +448,25 @@ class QuranPageWidget extends StatelessWidget {
                 WidgetSpan(
                   alignment: PlaceholderAlignment.middle,
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                     width: fontSize * 1.4,
                     height: fontSize * 1.4,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          textColor.withOpacity(0.08),
-                          textColor.withOpacity(0.04),
+                          textColor.withValues(alpha: 0.08),
+                          textColor.withValues(alpha: 0.04),
                         ],
                       ),
                       border: Border.all(
-                        color: textColor.withOpacity(0.35),
+                        color: textColor.withValues(alpha: 0.35),
                         width: 1.8,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: textColor.withOpacity(0.1),
+                          color: textColor.withValues(alpha: 0.1),
                           blurRadius: 3,
                           offset: const Offset(0, 1),
                         ),
@@ -439,9 +475,9 @@ class QuranPageWidget extends StatelessWidget {
                     child: Center(
                       child: Text(
                         _arabicNumber(ayah.numberInSurah),
-                        style: GoogleFonts.amiri(
+                        style: _safeAmiriFont(
                           fontSize: fontSize * 0.55,
-                          color: textColor.withOpacity(0.85),
+                          color: textColor.withValues(alpha: 0.85),
                           fontWeight: FontWeight.bold,
                           height: 1,
                         ),
@@ -465,14 +501,14 @@ class QuranPageWidget extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             backgroundColor,
-            textColor.withOpacity(0.05),
+            textColor.withValues(alpha: 0.05),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
         border: Border(
           top: BorderSide(
-            color: textColor.withOpacity(0.2),
+            color: textColor.withValues(alpha: 0.2),
             width: 1.5,
           ),
         ),
@@ -485,13 +521,13 @@ class QuranPageWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  textColor.withOpacity(0.12),
-                  textColor.withOpacity(0.08),
+                  textColor.withValues(alpha: 0.12),
+                  textColor.withValues(alpha: 0.08),
                 ],
               ),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: textColor.withOpacity(0.2),
+                color: textColor.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -501,12 +537,12 @@ class QuranPageWidget extends StatelessWidget {
                 Icon(
                   Icons.menu_book_outlined,
                   size: 16,
-                  color: textColor.withOpacity(0.7),
+                  color: textColor.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 8),
                 Text(
                   _arabicNumber(page.pageNumber),
-                  style: GoogleFonts.amiri(
+                  style: _safeAmiriFont(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: textColor,

@@ -177,7 +177,7 @@ class _EnhancedLoadingState extends State<EnhancedLoading>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: (widget.primaryColor ?? const Color(0xFF2196F3))
-                        .withOpacity(0.2),
+                        .withValues(alpha: 0.2),
                   ),
                 ),
               ),
@@ -209,7 +209,7 @@ class _EnhancedLoadingState extends State<EnhancedLoading>
                 widget.primaryColor ?? const Color(0xFFFF9800),
               ),
               backgroundColor: (widget.primaryColor ?? const Color(0xFFFF9800))
-                  .withOpacity(0.2),
+                  .withValues(alpha: 0.2),
             ),
             // Download icon
             Icon(
@@ -241,8 +241,10 @@ class _EnhancedLoadingState extends State<EnhancedLoading>
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: (widget.primaryColor ?? const Color(0xFF4CAF50))
-                          .withOpacity(
-                              0.8 - (i * 0.2) - _primaryAnimation.value * 0.3),
+                          .withValues(
+                              alpha: 0.8 -
+                                  (i * 0.2) -
+                                  _primaryAnimation.value * 0.3),
                       width: 2,
                     ),
                   ),
@@ -281,13 +283,13 @@ class _EnhancedLoadingState extends State<EnhancedLoading>
                 colors: [
                   widget.primaryColor ?? const Color(0xFF9C27B0),
                   (widget.secondaryColor ?? const Color(0xFF673AB7))
-                      .withOpacity(0.5),
+                      .withValues(alpha: 0.5),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
                   color: (widget.primaryColor ?? const Color(0xFF9C27B0))
-                      .withOpacity(0.5),
+                      .withValues(alpha: 0.5),
                   spreadRadius: 5,
                   blurRadius: 20,
                 ),
@@ -419,7 +421,7 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             child: Center(
               child: Container(
                 padding: const EdgeInsets.all(24),
@@ -428,7 +430,7 @@ class LoadingOverlay extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       spreadRadius: 2,
                       blurRadius: 10,
                     ),

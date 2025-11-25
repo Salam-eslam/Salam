@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../services/prayer_notification_service.dart';
-import '../providers/preference_settings_provider.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -86,6 +84,7 @@ class _NotificationSettingsScreenState
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
+            tooltip: 'Save settings',
             onPressed: _updateSettings,
           ),
         ],
@@ -209,7 +208,8 @@ class _NotificationSettingsScreenState
                       items: [5, 10, 15, 20, 30]
                           .map((minutes) => DropdownMenuItem(
                                 value: minutes,
-                                child: Text('$minutes minutes before', overflow: TextOverflow.ellipsis),
+                                child: Text('$minutes minutes before',
+                                    overflow: TextOverflow.ellipsis),
                               ))
                           .toList(),
                     ),
@@ -302,8 +302,8 @@ class _NotificationSettingsScreenState
                       items: List.generate(24, (index) => index)
                           .map((hour) => DropdownMenuItem(
                                 value: hour,
-                                child:
-                                    Text('${hour.toString().padLeft(2, '0')}:00'),
+                                child: Text(
+                                    '${hour.toString().padLeft(2, '0')}:00'),
                               ))
                           .toList(),
                     ),
@@ -321,7 +321,7 @@ class _NotificationSettingsScreenState
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: theme.colorScheme.secondaryContainer),
@@ -357,7 +357,8 @@ class _NotificationSettingsScreenState
               '• Daily Ayah includes beautiful verses with translations',
               style: theme.textTheme.bodyMedium?.copyWith(
                 height: 1.5,
-                color: theme.colorScheme.onSecondaryContainer.withOpacity(0.8),
+                color: theme.colorScheme.onSecondaryContainer
+                    .withValues(alpha: 0.8),
               ),
             ),
           ],

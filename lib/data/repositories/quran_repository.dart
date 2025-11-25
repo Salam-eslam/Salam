@@ -3,13 +3,14 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 // import 'package:path_provider/path_provider.dart';
 // import 'dart:io';
 import '../../core/errors/failures.dart';
+import '../../core/utils/result.dart';
 import '../../domain/entities/surah_entity.dart';
-import '../../domain/repositories/quran_repository_interface.dart';
+import 'package:salam/domain/repositories/quran_repository_interface.dart';
 import '../datasources/quran_remote_datasource.dart';
 import '../models/cached_surah.dart';
 import '../models/bookmark.dart';
 import '../models/reading_progress.dart' as data_models;
-import 'package:flutter/foundation.dart';
+import '../../core/utils/logger_service.dart';
 
 /// Implementation of QuranRepositoryInterface following clean architecture
 /// Handles data persistence, caching, and coordination between local and remote sources
@@ -21,6 +22,8 @@ class QuranRepository implements QuranRepositoryInterface {
   late Box<CachedSurah> _surahBox;
   late Box<Bookmark> _bookmarkBox;
   late Box<data_models.ReadingProgress> _progressBox;
+  late Box<Map<dynamic, dynamic>> _translationCache;
+  late Box<Map<dynamic, dynamic>> _tafsirCache;
 
   QuranRepository({
     required this.remoteDataSource,
@@ -34,6 +37,9 @@ class QuranRepository implements QuranRepositoryInterface {
       _bookmarkBox = await Hive.openBox<Bookmark>('bookmarks');
       _progressBox =
           await Hive.openBox<data_models.ReadingProgress>('reading_progress');
+      _translationCache =
+          await Hive.openBox<Map<dynamic, dynamic>>('translations');
+      _tafsirCache = await Hive.openBox<Map<dynamic, dynamic>>('tafsir');
     } catch (e) {
       throw StorageFailure(message: 'Failed to initialize storage: $e');
     }
@@ -178,7 +184,35 @@ class QuranRepository implements QuranRepositoryInterface {
     int verseNumber,
     String translationKey,
   ) async {
-    return ResultError(const ServerFailure(message: 'Not implemented yet'));
+    try {
+      // Get all surah translations and extract the specific verse
+      final result = await getSurahTranslations(surahNumber, translationKey);
+
+      if (result is Success<List<String>>) {
+        final translations = result.data;
+
+        // Verse number is 1-indexed
+        if (verseNumber < 1 || verseNumber > translations.length) {
+          return ResultError(InvalidInputFailure(
+            message:
+                'Invalid verse number: $verseNumber for surah $surahNumber',
+          ));
+        }
+
+        return Success(translations[verseNumber - 1]);
+      } else if (result is ResultError<List<String>>) {
+        return ResultError(result.failure);
+      }
+
+      return ResultError(const ServerFailure(
+        message: 'Unexpected result type',
+      ));
+    } catch (e) {
+      logger.error('Error getting verse translation: $e');
+      return ResultError(ServerFailure(
+        message: 'Failed to get verse translation: $e',
+      ));
+    }
   }
 
   @override
@@ -186,14 +220,99 @@ class QuranRepository implements QuranRepositoryInterface {
     int surahNumber,
     String translationKey,
   ) async {
-    return ResultError(const ServerFailure(message: 'Not implemented yet'));
+    try {
+      // 1. Validate input
+      if (surahNumber < 1 || surahNumber > 114) {
+        return ResultError(InvalidInputFailure(
+          message: 'Invalid surah number: $surahNumber',
+        ));
+      }
+
+      final cacheKey = '${surahNumber}_$translationKey';
+
+      // 2. Check cache first (offline-first pattern)
+      final cached = _translationCache.get(cacheKey);
+      if (cached != null && cached['data'] != null) {
+        final timestamp = cached['timestamp'] as int?;
+        final isExpired = timestamp == null ||
+            DateTime.now().millisecondsSinceEpoch - timestamp >
+                (7 * 24 * 60 * 60 * 1000); // 7 days
+
+        if (!isExpired) {
+          logger.debug('Using cached translation for surah $surahNumber');
+          return Success(List<String>.from(cached['data']));
+        }
+      }
+
+      // 3. Check connectivity
+      if (!await _hasInternetConnection) {
+        // Return cached even if expired, better than nothing
+        if (cached != null && cached['data'] != null) {
+          logger.warning(
+              'No internet, returning expired translation cache for surah $surahNumber');
+          return Success(List<String>.from(cached['data']));
+        }
+        return ResultError(NetworkFailure(
+          message: 'No internet connection and no cached translation available',
+        ));
+      }
+
+      // 4. Fetch from API
+      logger.debug(
+          'Fetching translation for surah $surahNumber with key: $translationKey');
+      final data = await remoteDataSource.getSurahWithTranslation(
+          surahNumber, translationKey);
+
+      // 5. Extract translations from verses
+      final List<String> translations = [];
+      if (data['ayahs'] != null) {
+        for (var ayah in data['ayahs']) {
+          translations.add(ayah['text']?.toString() ?? '');
+        }
+      }
+
+      // 6. Cache the result
+      await _translationCache.put(cacheKey, {
+        'data': translations,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      logger.info(
+          'Successfully fetched ${translations.length} translations for surah $surahNumber');
+      return Success(translations);
+    } on Failure catch (failure) {
+      logger.error('Failed to get translations: ${failure.message}');
+      return ResultError(failure);
+    } catch (e) {
+      logger.error('Unexpected error getting translations: $e');
+      return ResultError(ServerFailure(
+        message: 'Failed to get surah translations: $e',
+      ));
+    }
   }
 
   // ========================= TAFSIR OPERATIONS =========================
 
   @override
   Future<Result<List<TafsirInfo>>> getAvailableTafsirs() async {
-    return ResultError(const ServerFailure(message: 'Not implemented yet'));
+    // Return hardcoded list of available tafsirs
+    // In a real app, this might come from the API or a config file
+    return Success([
+      const TafsirInfo(
+        key: 'en.muyassar',
+        name: 'Tafsir Al-Muyassar',
+        author: 'King Fahd Quran Complex',
+        language: 'English',
+        languageCode: 'en',
+      ),
+      const TafsirInfo(
+        key: 'ar.muyassar',
+        name: 'التفسير الميسر',
+        author: 'مجمع الملك فهد',
+        language: 'Arabic',
+        languageCode: 'ar',
+      ),
+    ]);
   }
 
   @override
@@ -202,7 +321,88 @@ class QuranRepository implements QuranRepositoryInterface {
     int verseNumber,
     String tafsirKey,
   ) async {
-    return ResultError(const ServerFailure(message: 'Not implemented yet'));
+    try {
+      // 1. Validate input
+      if (surahNumber < 1 || surahNumber > 114) {
+        return ResultError(InvalidInputFailure(
+          message: 'Invalid surah number: $surahNumber',
+        ));
+      }
+
+      final cacheKey = '${surahNumber}_${verseNumber}_$tafsirKey';
+
+      // 2. Check cache first
+      final cached = _tafsirCache.get(cacheKey);
+      if (cached != null && cached['data'] != null) {
+        final timestamp = cached['timestamp'] as int?;
+        final isExpired = timestamp == null ||
+            DateTime.now().millisecondsSinceEpoch - timestamp >
+                (30 * 24 * 60 * 60 * 1000); // 30 days
+
+        if (!isExpired) {
+          logger.debug(
+              'Using cached tafsir for surah $surahNumber, verse $verseNumber');
+          return Success(cached['data'] as String);
+        }
+      }
+
+      // 3. Check connectivity
+      if (!await _hasInternetConnection) {
+        if (cached != null && cached['data'] != null) {
+          logger.warning(
+              'No internet, returning expired tafsir cache for surah $surahNumber, verse $verseNumber');
+          return Success(cached['data'] as String);
+        }
+        return ResultError(NetworkFailure(
+          message: 'No internet connection and no cached tafsir available',
+        ));
+      }
+
+      // 4. Fetch from API
+      logger.debug(
+          'Fetching tafsir for surah $surahNumber, verse $verseNumber with key: $tafsirKey');
+      final data =
+          await remoteDataSource.getSurahWithTafsir(surahNumber, tafsirKey);
+
+      // 5. Extract specific verse tafsir
+      String tafsirText = '';
+      if (data['ayahs'] != null) {
+        final ayahs = data['ayahs'] as List;
+        // Find the verse by numberInSurah
+        final verse = ayahs.firstWhere(
+          (ayah) => ayah['numberInSurah'] == verseNumber,
+          orElse: () => null,
+        );
+
+        if (verse != null) {
+          tafsirText = verse['text']?.toString() ?? '';
+        }
+      }
+
+      if (tafsirText.isEmpty) {
+        return ResultError(ServerFailure(
+          message: 'Tafsir not found for verse $verseNumber',
+        ));
+      }
+
+      // 6. Cache the result
+      await _tafsirCache.put(cacheKey, {
+        'data': tafsirText,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+
+      logger.info(
+          'Successfully fetched tafsir for surah $surahNumber, verse $verseNumber');
+      return Success(tafsirText);
+    } on Failure catch (failure) {
+      logger.error('Failed to get tafsir: ${failure.message}');
+      return ResultError(failure);
+    } catch (e) {
+      logger.error('Unexpected error getting tafsir: $e');
+      return ResultError(ServerFailure(
+        message: 'Failed to get verse tafsir: $e',
+      ));
+    }
   }
 
   // ========================= AUDIO OPERATIONS =========================
@@ -273,18 +473,14 @@ class QuranRepository implements QuranRepositoryInterface {
   Future<Result<void>> addBookmark(
       int surahNumber, int verseNumber, String? note) async {
     try {
-      if (kDebugMode) {
-        debugPrint(
-            '🔖 Attempting to add bookmark: Surah $surahNumber, Verse $verseNumber');
-      }
+      logger.debug(
+          '🔖 Attempting to add bookmark: Surah $surahNumber, Verse $verseNumber');
 
       // Check if already bookmarked first
       final isBookmarked = await isVerseBookmarked(surahNumber, verseNumber);
       if (isBookmarked is Success<bool> && isBookmarked.data) {
-        if (kDebugMode) {
-          debugPrint(
-              '⚠️ Bookmark already exists for Surah $surahNumber, Verse $verseNumber');
-        }
+        logger.warning(
+            '⚠️ Bookmark already exists for Surah $surahNumber, Verse $verseNumber');
         return ResultError(const ValidationFailure(
           message: 'Verse is already bookmarked',
         ));
@@ -305,9 +501,7 @@ class QuranRepository implements QuranRepositoryInterface {
           verseText = cachedVerse.text;
         } catch (e) {
           // Verse not found in cache, use fallback
-          if (kDebugMode) {
-            debugPrint('📝 Using fallback text for verse $verseNumber');
-          }
+          logger.debug('📝 Using fallback text for verse $verseNumber');
         }
       }
 
@@ -324,15 +518,11 @@ class QuranRepository implements QuranRepositoryInterface {
       final key = '${surahNumber}_$verseNumber';
       await _bookmarkBox.put(key, bookmark);
 
-      if (kDebugMode) {
-        debugPrint('✅ Bookmark saved successfully: $key');
-      }
+      logger.info('✅ Bookmark saved successfully: $key');
 
       return Success(null);
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('❌ Failed to add bookmark: $e');
-      }
+      logger.error('❌ Failed to add bookmark: $e');
       return ResultError(StorageFailure(
         message: 'Failed to save bookmark: $e',
       ));

@@ -113,8 +113,10 @@ class _MushafReaderState extends State<MushafReader> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<EnhancedThemeProvider>(
-      builder: (context, themeProvider, _) {
+    return Selector<EnhancedThemeProvider, ReadingMode>(
+      selector: (context, themeProvider) => themeProvider.readingMode,
+      builder: (context, readingMode, _) {
+        final themeProvider = context.read<EnhancedThemeProvider>();
         final colors = _getThemeColors(themeProvider);
 
         return Scaffold(
@@ -130,7 +132,7 @@ class _MushafReaderState extends State<MushafReader> {
 
   PreferredSizeWidget _buildAppBar(Map<String, Color> colors) {
     return AppBar(
-      backgroundColor: colors['surface']?.withOpacity(0.95),
+      backgroundColor: colors['surface']?.withValues(alpha: 0.95),
       elevation: 0,
       centerTitle: true,
       title: Column(
@@ -157,15 +159,17 @@ class _MushafReaderState extends State<MushafReader> {
             ],
           ),
           const SizedBox(height: 4),
-          Consumer<PageProgressProvider>(
-            builder: (context, progressProvider, _) {
+          Selector<PageProgressProvider, int>(
+            selector: (context, progressProvider) => _currentPage,
+            builder: (context, currentPage, _) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      colors['primary']!.withOpacity(0.15),
-                      colors['primary']!.withOpacity(0.08),
+                      colors['primary']!.withValues(alpha: 0.15),
+                      colors['primary']!.withValues(alpha: 0.08),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(12),
@@ -175,7 +179,7 @@ class _MushafReaderState extends State<MushafReader> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: colors['text']?.withOpacity(0.7),
+                    color: colors['text']?.withValues(alpha: 0.7),
                   ),
                 ),
               );
@@ -186,11 +190,12 @@ class _MushafReaderState extends State<MushafReader> {
       leading: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: colors['primary']?.withOpacity(0.1),
+          color: colors['primary']?.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: IconButton(
           icon: Icon(Icons.arrow_back, color: colors['primary'], size: 20),
+          tooltip: 'رجوع',
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -198,7 +203,7 @@ class _MushafReaderState extends State<MushafReader> {
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
-            color: colors['text']?.withOpacity(0.05),
+            color: colors['text']?.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
@@ -210,7 +215,7 @@ class _MushafReaderState extends State<MushafReader> {
         Container(
           margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
           decoration: BoxDecoration(
-            color: colors['text']?.withOpacity(0.05),
+            color: colors['text']?.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
           ),
           child: IconButton(
@@ -236,7 +241,7 @@ class _MushafReaderState extends State<MushafReader> {
             'جاري تحميل المصحف...',
             style: TextStyle(
               fontSize: 16,
-              color: colors['text']?.withOpacity(0.7),
+              color: colors['text']?.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -244,7 +249,8 @@ class _MushafReaderState extends State<MushafReader> {
     );
   }
 
-  Widget _buildPageView(Map<String, Color> colors, EnhancedThemeProvider themeProvider) {
+  Widget _buildPageView(
+      Map<String, Color> colors, EnhancedThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -252,7 +258,7 @@ class _MushafReaderState extends State<MushafReader> {
           end: Alignment.bottomCenter,
           colors: [
             colors['background']!,
-            colors['background']!.withOpacity(0.95),
+            colors['background']!.withValues(alpha: 0.95),
           ],
         ),
       ),
@@ -280,7 +286,7 @@ class _MushafReaderState extends State<MushafReader> {
                     'جاري تحميل الصفحة...',
                     style: TextStyle(
                       fontSize: 16,
-                      color: colors['text']?.withOpacity(0.6),
+                      color: colors['text']?.withValues(alpha: 0.6),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -307,127 +313,7 @@ class _MushafReaderState extends State<MushafReader> {
     );
   }
 
-  Widget _buildBottomBar(Map<String, Color> colors) {
-    return Consumer<PageProgressProvider>(
-      builder: (context, progressProvider, _) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: colors['surface'],
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, -2),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Progress indicator
-                if (progressProvider.totalPagesRead > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(4),
-                            child: LinearProgressIndicator(
-                              value: progressProvider.progressPercentage / 100,
-                              backgroundColor: colors['text']?.withOpacity(0.1),
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                colors['primary']!,
-                              ),
-                              minHeight: 6,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${progressProvider.progressPercentage.toStringAsFixed(1)}%',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: colors['text']?.withOpacity(0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Previous page button
-                    IconButton(
-                      icon: Icon(Icons.arrow_back_ios, color: colors['text']),
-                      onPressed: _currentPage > 1
-                          ? () {
-                              _pageController.previousPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            }
-                          : null,
-                    ),
-
-                    // Page indicator
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: _showJumpToPageDialog,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: colors['primary']?.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.menu_book,
-                                size: 20,
-                                color: colors['primary'],
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'صفحة $_currentPage من 604',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: colors['text'],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    // Next page button
-                    IconButton(
-                      icon: Icon(Icons.arrow_forward_ios, color: colors['text']),
-                      onPressed: _currentPage < 604
-                          ? () {
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                            }
-                          : null,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  // ignore: unused_element
 
   void _showJumpToPageDialog() {
     final TextEditingController controller = TextEditingController();
@@ -453,7 +339,9 @@ class _MushafReaderState extends State<MushafReader> {
             TextButton(
               onPressed: () {
                 final pageNumber = int.tryParse(controller.text);
-                if (pageNumber != null && pageNumber >= 1 && pageNumber <= 604) {
+                if (pageNumber != null &&
+                    pageNumber >= 1 &&
+                    pageNumber <= 604) {
                   Navigator.pop(context);
                   _pageController.animateToPage(
                     pageNumber - 1,
@@ -514,18 +402,24 @@ class _MushafReaderState extends State<MushafReader> {
                     children: [
                       ChoiceChip(
                         label: const Text('عادي'),
-                        selected: themeProvider.readingMode == ReadingMode.normal,
-                        onSelected: (_) => themeProvider.setReadingMode(ReadingMode.normal),
+                        selected:
+                            themeProvider.readingMode == ReadingMode.normal,
+                        onSelected: (_) =>
+                            themeProvider.setReadingMode(ReadingMode.normal),
                       ),
                       ChoiceChip(
                         label: const Text('ليلي'),
-                        selected: themeProvider.readingMode == ReadingMode.night,
-                        onSelected: (_) => themeProvider.setReadingMode(ReadingMode.night),
+                        selected:
+                            themeProvider.readingMode == ReadingMode.night,
+                        onSelected: (_) =>
+                            themeProvider.setReadingMode(ReadingMode.night),
                       ),
                       ChoiceChip(
                         label: const Text('مريح'),
-                        selected: themeProvider.readingMode == ReadingMode.comfort,
-                        onSelected: (_) => themeProvider.setReadingMode(ReadingMode.comfort),
+                        selected:
+                            themeProvider.readingMode == ReadingMode.comfort,
+                        onSelected: (_) =>
+                            themeProvider.setReadingMode(ReadingMode.comfort),
                       ),
                     ],
                   ),

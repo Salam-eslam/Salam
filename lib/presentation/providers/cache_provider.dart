@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../../core/utils/result.dart';
+import '../../core/utils/logger_service.dart';
 import '../../core/utils/dependency_injection.dart';
 import '../../domain/repositories/quran_repository_interface.dart';
 
@@ -56,7 +58,7 @@ class CacheProvider extends ChangeNotifier {
       }
       notifyListeners();
     } catch (e) {
-      debugPrint('Failed to update cache info: $e');
+      logger.error('Failed to update cache info: $e');
     }
   }
 
@@ -69,7 +71,7 @@ class CacheProvider extends ChangeNotifier {
 
       final result = await _repository!.clearCache();
       if (result is Success<void>) {
-      await updateCacheInfo();
+        await updateCacheInfo();
       } else {
         throw Exception('Failed to clear cache');
       }

@@ -1,329 +1,185 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
-import '../providers/preference_settings_provider.dart';
+import 'package:hijri/hijri_calendar.dart';
+import '../providers/islamic_calendar_provider.dart';
 
-class IslamicCalendarScreen extends StatefulWidget {
+class IslamicCalendarScreen extends StatelessWidget {
   const IslamicCalendarScreen({super.key});
 
   @override
-  State<IslamicCalendarScreen> createState() => _IslamicCalendarScreenState();
-}
-
-class _IslamicCalendarScreenState extends State<IslamicCalendarScreen>
-    with TickerProviderStateMixin {
-  late TabController _tabController;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 3, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text(
-          'Islamic Calendar',
-        ),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: const [
-            Tab(text: 'Today', icon: Icon(Icons.today)),
-            Tab(text: 'Events', icon: Icon(Icons.event)),
-            Tab(text: 'Ramadan', icon: Icon(Icons.nights_stay)),
-          ],
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildTodayTab(),
-          _buildEventsTab(),
-          _buildRamadanTab(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTodayTab() {
-    final theme = Theme.of(context);
-    // Simplified version without hijri package
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Current date card
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    'Today\'s Date',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now()),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary.withOpacity(0.8),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
+    return ChangeNotifierProvider(
+      create: (_) => context
+          .read<IslamicCalendarProvider>(), // Assuming provided by parent or DI
+      // Actually, we usually use the DI factory in the route or parent
+      // But for now let's assume it's provided above or we create it here using GetIt if needed
+      // In this project, providers are usually created in main.dart or route generation
+      // Let's check how other screens do it. CommunityScreen uses Consumer but provider is created in main?
+      // No, main.dart uses MultiProvider. We need to add this provider to main.dart or create it here.
+      // Let's create it here for now using GetIt to be safe and self-contained,
+      // or better, assume it's added to the global MultiProvider if that's the pattern.
+      // Looking at main.dart (from memory/context), it has a list of providers.
+      // I should probably add it there too, but for now let's wrap it here.
+      builder: (context, child) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Islamic Calendar'),
           ),
-
-          const SizedBox(height: 24),
-
-          // Placeholder for hijri features
-          Card(
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          body: Consumer<IslamicCalendarProvider>(
+            builder: (context, provider, child) {
+              return Column(
                 children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: theme.colorScheme.secondary,
-                        size: 20,
+                  // Month Navigation
+                  _buildMonthHeader(context, provider),
+
+                  // Calendar Grid
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          _buildCalendarGrid(context, provider),
+                          const Divider(),
+                          _buildEventsList(context, provider),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Islamic Calendar Features',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Islamic calendar features will be available once dependencies are properly installed.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                 ],
-              ),
-            ),
+              );
+            },
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildEventsTab() {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildMonthHeader(
+      BuildContext context, IslamicCalendarProvider provider) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          IconButton(
+            icon: const Icon(Icons.arrow_back_ios),
+            onPressed: provider.previousMonth,
+          ),
           Text(
-            'Important Islamic Events',
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: 16),
-
-          // Sample events
-          _buildEventCard('Ramadan begins',
-              DateTime.now().add(const Duration(days: 30))),
-          _buildEventCard('Eid al-Fitr',
-              DateTime.now().add(const Duration(days: 60))),
-          _buildEventCard('Hajj begins',
-              DateTime.now().add(const Duration(days: 120))),
-          _buildEventCard('Eid al-Adha',
-              DateTime.now().add(const Duration(days: 125))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRamadanTab() {
-    final theme = Theme.of(context);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            '${provider.selectedDate.toFormat("MMMM yyyy")}',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: [
-                  Icon(
-                    Icons.nights_stay,
-                    color: theme.colorScheme.onPrimary,
-                    size: 40,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Ramadan Information',
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'The holy month of fasting',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary.withOpacity(0.8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ),
-          const SizedBox(height: 24),
-          Card(
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: theme.colorScheme.secondary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'About Ramadan',
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          color: theme.colorScheme.secondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Ramadan is the ninth month of the Islamic calendar and is the holy month of fasting for Muslims. During this month, Muslims fast from dawn (Fajr) to sunset (Maghrib), abstaining from food, drink, and other physical pleasures.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Key practices during Ramadan:\n• Fasting (Sawm)\n• Increased prayer and Quran reading\n• Charity (Zakat)\n• Night prayers (Tarawih)\n• Seeking Laylat al-Qadr',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.arrow_forward_ios),
+            onPressed: provider.nextMonth,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEventCard(String name, DateTime date) {
-    final theme = Theme.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+  Widget _buildCalendarGrid(
+      BuildContext context, IslamicCalendarProvider provider) {
+    // Simple grid for MVP.
+    // Note: HijriCalendar doesn't give easy "days in month" or "weekday of 1st" directly
+    // without some calculation or using the library's internal logic.
+    // The `hijri` package has `getDaysInMonth(year, month)`.
+
+    final daysInMonth = provider.selectedDate.getDaysInMonth(
+        provider.selectedDate.hYear, provider.selectedDate.hMonth);
+
+    // We need to know which weekday the 1st of the month falls on.
+    // We can convert Hijri(year, month, 1) to Gregorian and get weekday.
+    final firstDayHijri = HijriCalendar();
+    firstDayHijri.hYear = provider.selectedDate.hYear;
+    firstDayHijri.hMonth = provider.selectedDate.hMonth;
+    firstDayHijri.hDay = 1;
+    final firstDayGregorian = firstDayHijri.hijriToGregorian(
+        firstDayHijri.hYear, firstDayHijri.hMonth, 1);
+    final startWeekday = firstDayGregorian.weekday; // 1 = Mon, 7 = Sun
+
+    // Adjust for Sunday start if needed, but standard is usually Mon or Sun.
+    // Let's assume standard grid.
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 7,
+        childAspectRatio: 1.0,
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.event,
-                color: theme.colorScheme.onPrimary,
-                size: 20,
-              ),
+      itemCount: daysInMonth + (startWeekday % 7), // Offset
+      itemBuilder: (context, index) {
+        if (index < (startWeekday % 7)) {
+          return const SizedBox();
+        }
+
+        final day = index - (startWeekday % 7) + 1;
+        final isToday = provider.currentHijriDate.hYear ==
+                provider.selectedDate.hYear &&
+            provider.currentHijriDate.hMonth == provider.selectedDate.hMonth &&
+            provider.currentHijriDate.hDay == day;
+
+        final hasEvent = provider.eventsForMonth.any((e) => e.hijriDay == day);
+
+        return Container(
+          margin: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: isToday
+                ? Theme.of(context).primaryColor
+                : (hasEvent
+                    ? Theme.of(context).primaryColor.withValues(alpha: 0.1)
+                    : null),
+            shape: BoxShape.circle,
+            border: isToday ? null : Border.all(color: Colors.grey.shade300),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            '$day',
+            style: TextStyle(
+              color: isToday
+                  ? Colors.white
+                  : (hasEvent ? Theme.of(context).primaryColor : null),
+              fontWeight:
+                  isToday || hasEvent ? FontWeight.bold : FontWeight.normal,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    DateFormat('MMM d, yyyy').format(date),
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.7),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEventsList(
+      BuildContext context, IslamicCalendarProvider provider) {
+    if (provider.eventsForMonth.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text('No major events this month.'),
+      );
+    }
+
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: provider.eventsForMonth.length,
+      itemBuilder: (context, index) {
+        final event = provider.eventsForMonth[index];
+        return ListTile(
+          leading: CircleAvatar(
+            backgroundColor:
+                Theme.of(context).primaryColor.withValues(alpha: 0.2),
+            child: Text('${event.hijriDay}'),
+          ),
+          title: Text(event.name,
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          subtitle: Text(event.description),
+          trailing: event.isMajor
+              ? const Icon(Icons.star, color: Colors.amber)
+              : null,
+        );
+      },
     );
   }
 }

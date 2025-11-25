@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/community_service.dart';
-import '../providers/preference_settings_provider.dart';
+import '../providers/community_provider.dart';
+import '../widgets/post_card.dart';
+import 'create_post_screen.dart';
+import 'post_detail_screen.dart';
 
 class CommunityScreen extends StatefulWidget {
   const CommunityScreen({super.key});
@@ -18,6 +21,11 @@ class _CommunityScreenState extends State<CommunityScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+
+    // Load posts when screen initializes
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommunityProvider>().loadPosts();
+    });
   }
 
   @override
@@ -28,8 +36,6 @@ class _CommunityScreenState extends State<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -39,8 +45,8 @@ class _CommunityScreenState extends State<CommunityScreen>
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
+            Tab(text: 'Feed', icon: Icon(Icons.forum)),
             Tab(text: 'Daily Ayah', icon: Icon(Icons.auto_awesome)),
-            Tab(text: 'Statistics', icon: Icon(Icons.analytics)),
             Tab(text: 'Share', icon: Icon(Icons.share)),
           ],
         ),
@@ -48,11 +54,101 @@ class _CommunityScreenState extends State<CommunityScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
+          _buildFeedTab(),
           _buildDailyAyahTab(),
-          _buildStatisticsTab(),
           _buildShareTab(),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CreatePostScreen()),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildFeedTab() {
+    return Consumer<CommunityProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (provider.error != null) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: ${provider.error}'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => provider.loadPosts(),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        if (provider.posts.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.forum_outlined, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                Text(
+                  'No posts yet',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                const Text('Be the first to share something!'),
+              ],
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () => provider.loadPosts(),
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: provider.posts.length,
+            itemBuilder: (context, index) {
+              final post = provider.posts[index];
+              return PostCard(
+                post: post,
+                onLike: () async {
+                  // Use a hardcoded user ID for now
+                  const userId = 'anonymous_user';
+                  await provider.toggleLikePost(post.id, userId);
+                },
+                onComment: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PostDetailScreen(post: post),
+                    ),
+                  );
+                },
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PostDetailScreen(post: post),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -75,7 +171,10 @@ class _CommunityScreenState extends State<CommunityScreen>
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                  colors: [
+                    theme.colorScheme.primary,
+                    theme.colorScheme.secondary
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -102,7 +201,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.onPrimary.withOpacity(0.1),
+                      color: theme.colorScheme.onPrimary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -133,7 +232,7 @@ class _CommunityScreenState extends State<CommunityScreen>
                   Text(
                     '— ${dailyAyah['surah']} ${dailyAyah['surahNumber']}:${dailyAyah['ayahNumber']}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary.withOpacity(0.8),
+                      color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -159,47 +258,6 @@ class _CommunityScreenState extends State<CommunityScreen>
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildStatisticsTab() {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.analytics,
-              size: 64,
-              color: theme.colorScheme.onSurface.withOpacity(0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Reading Statistics',
-              style: theme.textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Track your reading progress, streaks, and sharing activity.',
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.7),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Statistics will appear here as you read and share ayahs.',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -297,7 +355,7 @@ class _CommunityScreenState extends State<CommunityScreen>
     final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: theme.colorScheme.secondaryContainer.withOpacity(0.3),
+      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.3),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: theme.colorScheme.secondaryContainer),
